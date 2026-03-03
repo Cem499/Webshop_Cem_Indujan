@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"Alle Klassen und Schnittstellen","u":"allclasses-index.html"},{"p":"ch.wiss.webshop.controller","l":"BestellpositionController"}];updateSearchResults();
