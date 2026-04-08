@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../services/api-client";
+import { useAuth } from "../context/AuthContext";
+import AuthRequiredModal from "./AuthRequiredModal";
 
 export default function ProdukteList() {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
+
     const [produkte, setProdukte] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    // Steuert ob das Login-Modal angezeigt wird
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
+    const isAdmin = user?.role === "ADMIN";
 
     useEffect(() => {
         loadProdukte();
@@ -17,7 +25,6 @@ export default function ProdukteList() {
     const loadProdukte = async () => {
         try {
             setLoading(true);
-            // apiClient sendet JWT automatisch mit – bei 401 wird zur Login-Seite weitergeleitet
             const response = await apiClient.get("/produkte");
             setProdukte(response.data);
             setError(null);
@@ -48,6 +55,12 @@ export default function ProdukteList() {
     };
 
     function addToCart(produkt) {
+        // Nicht eingeloggte User können nicht bestellen – Modal anzeigen
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
+
         if (produkt.bestand === 0) return;
         const cart = JSON.parse(localStorage.getItem("cart") || "[]");
         const existing = cart.find(item => item.id === produkt.id);
@@ -57,7 +70,7 @@ export default function ProdukteList() {
             cart.push({ ...produkt, menge: 1 });
         }
         localStorage.setItem("cart", JSON.stringify(cart));
-        showMessage(` ${produkt.name} zum Warenkorb hinzugefügt!`);
+        showMessage(`${produkt.name} zum Warenkorb hinzugefügt!`);
         window.dispatchEvent(new Event("storage"));
     }
 
@@ -87,17 +100,27 @@ export default function ProdukteList() {
 
     return (
         <div>
+            {/* Login-Modal erscheint wenn nicht-eingeloggter User Warenkorb-Button klickt */}
+            {showAuthModal && (
+                <AuthRequiredModal
+                    onClose={() => setShowAuthModal(false)}
+                    message="Um Produkte in den Warenkorb zu legen und zu bestellen, musst du angemeldet sein."
+                />
+            )}
+
             <div className="page-header">
                 <h1>Produkte</h1>
-                <button className="btn btn-primary" onClick={() => navigate("/new-produkt")}>
-                    Neues Produkt
-                </button>
+                {/* Neues Produkt nur für ADMIN sichtbar */}
+                {isAdmin && (
+                    <button className="btn btn-primary" onClick={() => navigate("/new-produkt")}>
+                        Neues Produkt
+                    </button>
+                )}
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ position: 'relative' }}>
                     <h3 style={{ color: '#2c3e50' }}>Suchen</h3>
-
                     <input
                         type="text"
                         className="form-control"
@@ -123,6 +146,17 @@ export default function ProdukteList() {
 
             {message && <div className="alert alert-success">{message}</div>}
             {error && <div className="alert alert-error">{error}</div>}
+
+            {/* Hinweis für nicht-eingeloggte User */}
+            {!isAuthenticated && (
+                <div className="alert" style={{
+                    background: '#e8f4f8', border: '1px solid #3498db',
+                    color: '#2980b9', marginBottom: '1rem', padding: '0.75rem 1rem',
+                    borderRadius: '4px'
+                }}>
+                    Melde dich an oder registriere dich, um Produkte in den Warenkorb zu legen.
+                </div>
+            )}
 
             {filteredProdukte.length === 0 ? (
                 <div className="card empty-state">
@@ -152,15 +186,25 @@ export default function ProdukteList() {
                                 <td>{prod.kategorie?.name || '-'}</td>
                                 <td>
                                     <div className="action-buttons">
-                                        <button className="btn btn-success btn-sm" onClick={() => addToCart(prod)} disabled={prod.bestand === 0}>
-                                            In den Warenkorb
+                                        <button
+                                            className="btn btn-success btn-sm"
+                                            onClick={() => addToCart(prod)}
+                                            disabled={prod.bestand === 0}
+                                            title={!isAuthenticated ? "Anmelden um zu bestellen" : ""}
+                                        >
+                                            {prod.bestand === 0 ? "Nicht verfügbar" : "In den Warenkorb"}
                                         </button>
-                                        <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
-                                            Bearbeiten
-                                        </button>
-                                        <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
-                                            Löschen
-                                        </button>
+                                        {/* Bearbeiten und Löschen nur für ADMIN */}
+                                        {isAdmin && (
+                                            <>
+                                                <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
+                                                    Bearbeiten
+                                                </button>
+                                                <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
+                                                    Löschen
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
