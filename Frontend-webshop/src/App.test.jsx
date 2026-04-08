@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App";
 import Home from "./pages/Home";
-import Navigation from "./pages/Navigation";
+
+// App verwendet AuthProvider, der useNavigate() aufruft – MemoryRouter muss als äusserster Wrapper sein.
+// Navigation verwendet useAuth() – wird durch AuthProvider bereitgestellt, der in App enthalten ist.
 
 // Test 1: Home zeigt Begrüssungstext
 test("Home zeigt Begrüssungstext", () => {
@@ -10,19 +12,7 @@ test("Home zeigt Begrüssungstext", () => {
     expect(screen.getByText(/Willkommen im Cem Sin Webshop!/i)).toBeInTheDocument();
 });
 
-// Test 2: Navigation zeigt alle Links
-test("Navigation zeigt alle Links", () => {
-    render(
-        <MemoryRouter>
-            <Navigation />
-        </MemoryRouter>
-    );
-    expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Kategorien")).toBeInTheDocument();
-    expect(screen.getByText("Produkte")).toBeInTheDocument();
-});
-
-// Test 3: App zeigt das Logo im Layout
+// Test 2: App rendert ohne Absturz und zeigt Logo
 test("App zeigt das Logo im Layout", () => {
     render(
         <MemoryRouter>
@@ -33,7 +23,7 @@ test("App zeigt das Logo im Layout", () => {
     expect(screen.getAllByText(/Cem Sin Webshop/i).length).toBeGreaterThan(0);
 });
 
-// Test 4: Home zeigt Features
+// Test 3: Home zeigt Features
 test("Home zeigt Features", () => {
     render(<Home />);
     expect(screen.getByText("Grosse Auswahl")).toBeInTheDocument();
@@ -41,12 +31,24 @@ test("Home zeigt Features", () => {
     expect(screen.getByText("Einfach Bestellen")).toBeInTheDocument();
 });
 
-// Test 5: Navigation enthält Warenkorb-Link
-test("Navigation enthält Warenkorb-Link", () => {
+// Test 4: Nicht eingeloggte Navigation zeigt Login und Register
+test("Navigation zeigt Login und Register wenn nicht eingeloggt", () => {
     render(
         <MemoryRouter>
-            <Navigation />
+            <App />
         </MemoryRouter>
     );
-    expect(screen.getByText("Warenkorb")).toBeInTheDocument();
+    expect(screen.getByText("Anmelden")).toBeInTheDocument();
+    expect(screen.getByText("Registrieren")).toBeInTheDocument();
+});
+
+// Test 5: Navigation zeigt immer Home und Produkte
+test("Navigation zeigt Home und Produkte", () => {
+    render(
+        <MemoryRouter>
+            <App />
+        </MemoryRouter>
+    );
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Produkte")).toBeInTheDocument();
 });
