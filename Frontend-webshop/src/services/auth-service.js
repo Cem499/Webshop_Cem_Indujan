@@ -21,7 +21,7 @@ const login = async (usernameOrEmail, password) => {
     } catch (error) {
         // Fehlermeldung vom Backend bevorzugen, damit dem User konkrete Infos
         // angezeigt werden (z.B. "Falsches Passwort" statt generisches "Login fehlgeschlagen").
-        throw new Error(error.response?.data?.message || "Login fehlgeschlagen");
+        throw new Error(error.response?.data?.message || error.response?.data || "Login fehlgeschlagen");
     }
 };
 
