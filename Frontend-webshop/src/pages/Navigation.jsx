@@ -20,8 +20,6 @@ export default function Navigation() {
                         <>
                             <li className="nav-divider" aria-hidden="true" />
                             <li><Link to="/kategorien" className="nav-link">Kategorien</Link></li>
-                            <li><Link to="/admin/produkte" className="nav-link">+ Produkt</Link></li>
-                            <li><Link to="/admin/kategorien" className="nav-link">+ Kategorie</Link></li>
                             <li><Link to="/admin/bestellungen" className="nav-link">Alle Bestellungen</Link></li>
                         </>
                     )}
