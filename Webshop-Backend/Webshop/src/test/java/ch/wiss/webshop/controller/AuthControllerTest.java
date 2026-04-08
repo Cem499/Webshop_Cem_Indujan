@@ -34,8 +34,8 @@ import org.springframework.test.web.servlet.MockMvc;
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
     "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
     "spring.jpa.hibernate.ddl-auto=create-drop",
-    "app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
-    "app.jwt.expiration=86400000",
+    "jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
+    "jwt.expiration=86400000",
     "logging.level.org.springframework.security=WARN",
     "logging.level.org.hibernate.SQL=WARN"
 })

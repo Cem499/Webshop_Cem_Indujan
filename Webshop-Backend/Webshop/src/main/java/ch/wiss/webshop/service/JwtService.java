@@ -54,15 +54,15 @@ public class JwtService {
      * Wird aus {@code application.properties} (app.jwt.secret) geladen.
      * Muss Base64-kodiert und mindestens 256 Bit lang sein.
      */
-    @Value("${app.jwt.secret}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     /**
      * Gültigkeitsdauer des Tokens in Millisekunden.
      * Standard: 86400000 ms = 24 Stunden.
-     * Wird aus {@code application.properties} (app.jwt.expiration) geladen.
+     * Wird aus {@code application.properties} (jwt.expiration) geladen.
      */
-    @Value("${app.jwt.expiration}")
+    @Value("${jwt.expiration}")
     private long jwtExpiration;
 
     // =========================================================================

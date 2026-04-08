@@ -19,8 +19,8 @@ import ch.wiss.webshop.model.Role;
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-    "app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
-    "app.jwt.expiration=86400000",
+    "jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
+    "jwt.expiration=86400000",
     "spring.datasource.url=jdbc:h2:mem:jwtservicetest;DB_CLOSE_DELAY=-1",
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa",
