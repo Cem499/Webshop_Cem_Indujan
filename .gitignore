@@ -1,0 +1,38 @@
+﻿# Maven
+target/
+*.jar
+*.war
+*.class
+
+# Eclipse
+.metadata/
+.settings/
+.project
+.classpath
+.factorypath
+bin/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env
+.env
+.env.local
