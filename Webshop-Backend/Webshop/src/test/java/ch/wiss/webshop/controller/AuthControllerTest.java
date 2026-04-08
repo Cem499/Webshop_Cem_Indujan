@@ -30,11 +30,14 @@ import org.springframework.test.web.servlet.MockMvc;
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa",
     "spring.datasource.password=",
+    // Hibernate-Dialect explizit auf H2 setzen – überschreibt den MySQLDialect aus application.properties
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
     "app.jwt.expiration=86400000",
-    "logging.level.org.springframework.security=WARN"
+    "logging.level.org.springframework.security=WARN",
+    "logging.level.org.hibernate.SQL=WARN"
 })
 class AuthControllerTest {
 

@@ -21,11 +21,13 @@ import ch.wiss.webshop.model.Role;
 @TestPropertySource(properties = {
     "app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
     "app.jwt.expiration=86400000",
-    "spring.datasource.url=jdbc:h2:mem:jwtservicetest",
+    "spring.datasource.url=jdbc:h2:mem:jwtservicetest;DB_CLOSE_DELAY=-1",
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa",
     "spring.datasource.password=",
+    // Hibernate-Dialect explizit auf H2 setzen – überschreibt den MySQLDialect aus application.properties
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
     "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 class JwtServiceTest {
