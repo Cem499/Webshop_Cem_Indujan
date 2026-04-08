@@ -28,8 +28,12 @@ export default function ProtectedRoute({ children, requiredRole, allowedRoles })
         return <Navigate to="/forbidden" replace />;
     }
 
-    // Liste erlaubter Rollen – User muss in der Liste sein (z.B. ADMIN oder KUNDE)
+    // Liste erlaubter Rollen – User muss in der Liste sein
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
+        // ADMIN der auf /bestellungen geht → zu /admin/bestellungen umleiten
+        if (user?.role === "ADMIN") {
+            return <Navigate to="/admin/bestellungen" replace />;
+        }
         return <Navigate to="/forbidden" replace />;
     }
 

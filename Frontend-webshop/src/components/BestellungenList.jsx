@@ -9,6 +9,7 @@ export default function BestellungenList() {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALLE');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadBestellungen();
@@ -70,9 +71,17 @@ export default function BestellungenList() {
         color: status === 'OFFEN' ? '#856404' : status === 'BEZAHLT' ? '#155724' : '#721c24'
     });
 
-    const filteredBestellungen = statusFilter === 'ALLE'
-        ? bestellungen
-        : bestellungen.filter(b => b.status === statusFilter);
+    const filteredBestellungen = bestellungen.filter(b => {
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !q || (
+            b.kundenName?.toLowerCase().includes(q) ||
+            b.kundenEmail?.toLowerCase().includes(q) ||
+            b.lieferStadt?.toLowerCase().includes(q) ||
+            String(b.id).includes(q)
+        );
+        const matchesStatus = statusFilter === 'ALLE' || b.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     if (loading) {
         return (
@@ -87,6 +96,27 @@ export default function BestellungenList() {
         <div>
             <div className="page-header">
                 <h1>Alle Bestellungen (Admin)</h1>
+            </div>
+
+            {/* Such- und Filterleiste */}
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'flex-end' }}>
+                <div style={{ position: 'relative', flex: '1', minWidth: '250px' }}>
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Suchen nach Name, Email, Stadt oder Nr...."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ paddingRight: searchQuery ? '2.5rem' : '0.75rem' }}
+                    />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} style={{
+                            position: 'absolute', right: '0.75rem', top: '50%',
+                            transform: 'translateY(-50%)', background: 'none',
+                            border: 'none', cursor: 'pointer', color: '#95a5a6', fontSize: '1rem', padding: 0
+                        }}>✕</button>
+                    )}
+                </div>
                 <select
                     className="form-control"
                     value={statusFilter}
@@ -100,12 +130,21 @@ export default function BestellungenList() {
                 </select>
             </div>
 
+            {(searchQuery || statusFilter !== 'ALLE') && (
+                <p style={{ marginBottom: '1rem', color: '#7f8c8d', fontSize: '0.875rem' }}>
+                    {filteredBestellungen.length} von {bestellungen.length} Bestellungen gefunden
+                </p>
+            )}
+
             {message && <div className="alert alert-success">{message}</div>}
             {error && <div className="alert alert-error">{error}</div>}
 
             {filteredBestellungen.length === 0 ? (
                 <div className="card empty-state">
                     <h2>Keine Bestellungen gefunden</h2>
+                    {(searchQuery || statusFilter !== 'ALLE') && (
+                        <p>Versuche einen anderen Suchbegriff oder Filter.</p>
+                    )}
                 </div>
             ) : (
                 <table className="table">

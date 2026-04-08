@@ -1,32 +1,17 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import apiClient from "../services/api-client";
-import { useAuth } from "../context/AuthContext";
 
 export default function Bestellungen() {
     const location = useLocation();
-    const { user } = useAuth();
-    const isAdmin = user?.role === "ADMIN";
     const [bestellungen, setBestellungen] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [positionen, setPositionen] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(location.state?.successMessage || '');
-    const [showForm, setShowForm] = useState(false);
-    const [editingId, setEditingId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALLE');
-    const [formData, setFormData] = useState({
-        kundenName: '',
-        kundenEmail: '',
-        lieferStrasse: '',
-        lieferPlz: '',
-        lieferStadt: '',
-        lieferLand: 'Schweiz',
-        status: 'OFFEN'
-    });
-    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         loadBestellungen();
@@ -35,8 +20,8 @@ export default function Bestellungen() {
     const loadBestellungen = async () => {
         try {
             setLoading(true);
-            // apiClient sendet JWT automatisch – Backend gibt nur eigene Bestellungen zurück
-            const response = await apiClient.get("/bestellungen");
+            // /bestellungen/meine gibt immer nur eigene Bestellungen zurück (ADMIN + KUNDE)
+            const response = await apiClient.get("/bestellungen/meine");
             setBestellungen(response.data);
             setError(null);
         } catch (err) {
@@ -62,39 +47,6 @@ export default function Bestellungen() {
         loadPositionen(bestellung.id);
     };
 
-    const handleEdit = (bestellung) => {
-        setEditingId(bestellung.id);
-        setFormData({
-            kundenName: bestellung.kundenName,
-            kundenEmail: bestellung.kundenEmail,
-            lieferStrasse: bestellung.lieferStrasse,
-            lieferPlz: bestellung.lieferPlz,
-            lieferStadt: bestellung.lieferStadt,
-            lieferLand: bestellung.lieferLand,
-            status: bestellung.status
-        });
-        setErrors({});
-        setShowForm(true);
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('Wirklich löschen?')) {
-            try {
-                await apiClient.delete(`/bestellungen/${id}`);
-                showMessage('Bestellung erfolgreich gelöscht');
-                setSelectedId(null);
-                loadBestellungen();
-            } catch (err) {
-                if (err.response?.status === 409) {
-                    setError(err.response?.data || 'Bestellung kann nicht gelöscht werden');
-                } else {
-                    console.error('Fehler beim Löschen:', err);
-                    setError(`Fehler beim Löschen: ${err.message}`);
-                }
-            }
-        }
-    };
-
     const handleStornieren = async (id) => {
         if (window.confirm('Bestellung wirklich stornieren?')) {
             try {
@@ -105,31 +57,6 @@ export default function Bestellungen() {
             } catch (err) {
                 setError(`Fehler beim Stornieren: ${err.message}`);
             }
-        }
-    };
-
-    const validate = () => {
-        const newErrors = {};
-        if (!formData.kundenName.trim()) newErrors.kundenName = 'Name erforderlich';
-        if (!formData.kundenEmail.includes('@')) newErrors.kundenEmail = 'Ungültige Email';
-        if (!formData.lieferStrasse.trim()) newErrors.lieferStrasse = 'Strasse erforderlich';
-        if (!formData.lieferPlz.trim()) newErrors.lieferPlz = 'PLZ erforderlich';
-        if (!formData.lieferStadt.trim()) newErrors.lieferStadt = 'Stadt erforderlich';
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validate()) return;
-        try {
-            await apiClient.put(`/bestellungen/${editingId}`, formData);
-            showMessage('Bestellung erfolgreich aktualisiert');
-            setShowForm(false);
-            loadBestellungen();
-        } catch (err) {
-            console.error('Fehler beim Speichern:', err);
-            setError(`Fehler beim Speichern: ${err.message}`);
         }
     };
 
@@ -166,72 +93,6 @@ export default function Bestellungen() {
             <div className="loading">
                 <div className="spinner"></div>
                 <p>Lade Daten vom Backend...</p>
-            </div>
-        );
-    }
-
-    if (showForm && editingId) {
-        return (
-            <div>
-                <div className="page-header">
-                    <h1>Bestellung #{editingId} bearbeiten</h1>
-                    <button className="btn btn-secondary" onClick={() => setShowForm(false)}>← Zurück</button>
-                </div>
-                {message && <div className="alert alert-success">{message}</div>}
-                {error && <div className="alert alert-error">{error}</div>}
-                <div className="card">
-                    <div className="card-header">Bestellung aktualisieren</div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="form-group">
-                            <label>Kundenname *</label>
-                            <input type="text" className="form-control" value={formData.kundenName}
-                                onChange={(e) => setFormData({ ...formData, kundenName: e.target.value })} />
-                            {errors.kundenName && <div className="error">{errors.kundenName}</div>}
-                        </div>
-                        <div className="form-group">
-                            <label>Email *</label>
-                            <input type="email" className="form-control" value={formData.kundenEmail}
-                                onChange={(e) => setFormData({ ...formData, kundenEmail: e.target.value })} />
-                            {errors.kundenEmail && <div className="error">{errors.kundenEmail}</div>}
-                        </div>
-                        <div className="form-group">
-                            <label>Strasse *</label>
-                            <input type="text" className="form-control" value={formData.lieferStrasse}
-                                onChange={(e) => setFormData({ ...formData, lieferStrasse: e.target.value })} />
-                            {errors.lieferStrasse && <div className="error">{errors.lieferStrasse}</div>}
-                        </div>
-                        <div className="form-group">
-                            <label>PLZ *</label>
-                            <input type="text" className="form-control" value={formData.lieferPlz}
-                                onChange={(e) => setFormData({ ...formData, lieferPlz: e.target.value })} />
-                            {errors.lieferPlz && <div className="error">{errors.lieferPlz}</div>}
-                        </div>
-                        <div className="form-group">
-                            <label>Stadt *</label>
-                            <input type="text" className="form-control" value={formData.lieferStadt}
-                                onChange={(e) => setFormData({ ...formData, lieferStadt: e.target.value })} />
-                            {errors.lieferStadt && <div className="error">{errors.lieferStadt}</div>}
-                        </div>
-                        <div className="form-group">
-                            <label>Land *</label>
-                            <input type="text" className="form-control" value={formData.lieferLand}
-                                onChange={(e) => setFormData({ ...formData, lieferLand: e.target.value })} />
-                        </div>
-                        <div className="form-group">
-                            <label>Status *</label>
-                            <select className="form-control" value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
-                                <option value="OFFEN">Offen</option>
-                                <option value="BEZAHLT">Bezahlt</option>
-                                <option value="STORNIERT">Storniert</option>
-                            </select>
-                        </div>
-                        <div className="form-actions">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Abbrechen</button>
-                            <button type="submit" className="btn btn-primary">Speichern</button>
-                        </div>
-                    </form>
-                </div>
             </div>
         );
     }
@@ -290,17 +151,10 @@ export default function Bestellungen() {
                     )}
                 </div>
                 <div className="action-buttons">
-                    {isAdmin ? (
-                        <>
-                            <button className="btn btn-primary" onClick={() => handleEdit(selected)}>Bestellung bearbeiten</button>
-                            <button className="btn btn-danger" onClick={() => handleDelete(selected.id)}>Bestellung löschen</button>
-                        </>
-                    ) : (
-                        selected.status === 'OFFEN' && (
-                            <button className="btn btn-danger" onClick={() => handleStornieren(selected.id)}>
-                                Bestellung stornieren
-                            </button>
-                        )
+                    {selected.status === 'OFFEN' && (
+                        <button className="btn btn-danger" onClick={() => handleStornieren(selected.id)}>
+                            Bestellung stornieren
+                        </button>
                     )}
                 </div>
             </div>
@@ -310,27 +164,29 @@ export default function Bestellungen() {
     return (
         <div>
             <div className="page-header">
-                <h1>Bestellungen</h1>
+                <h1>Meine Bestellungen</h1>
             </div>
 
             <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                <div style={{ position: 'relative', flex: '1', minWidth: '250px' }}>
+                <div style={{ flex: '1', minWidth: '250px' }}>
                     <h3 style={{ color: '#2c3e50' }}>Suchen</h3>
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Bestellungen suchen nach Name, Email oder Nr...."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '2.5rem', paddingRight: searchQuery ? '2.5rem' : '0.75rem' }}
-                    />
-                    {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} style={{
-                            position: 'absolute', right: '0.75rem', top: '50%',
-                            transform: 'translateY(-50%)', background: 'none',
-                            border: 'none', cursor: 'pointer', color: '#95a5a6', fontSize: '1rem', padding: 0
-                        }}>✕</button>
-                    )}
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Bestellungen suchen nach Name, Email oder Nr...."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ paddingRight: searchQuery ? '2.5rem' : '0.75rem' }}
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} style={{
+                                position: 'absolute', right: '0.75rem', top: '50%',
+                                transform: 'translateY(-50%)', background: 'none',
+                                border: 'none', cursor: 'pointer', color: '#95a5a6', fontSize: '1rem', padding: 0
+                            }}>✕</button>
+                        )}
+                    </div>
                 </div>
                 <select
                     className="form-control"
@@ -384,17 +240,10 @@ export default function Bestellungen() {
                                 <td>
                                     <div className="action-buttons">
                                         <button className="btn btn-primary btn-sm" onClick={() => handleSelectBestellung(b)}>Details</button>
-                                        {isAdmin ? (
-                                            <>
-                                                <button className="btn btn-primary btn-sm" onClick={() => handleEdit(b)}>Bearbeiten</button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.id)}>Löschen</button>
-                                            </>
-                                        ) : (
-                                            b.status === 'OFFEN' && (
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleStornieren(b.id)}>
-                                                    Stornieren
-                                                </button>
-                                            )
+                                        {b.status === 'OFFEN' && (
+                                            <button className="btn btn-danger btn-sm" onClick={() => handleStornieren(b.id)}>
+                                                Stornieren
+                                            </button>
                                         )}
                                     </div>
                                 </td>

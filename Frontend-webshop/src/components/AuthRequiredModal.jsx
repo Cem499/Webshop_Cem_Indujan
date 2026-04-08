@@ -20,7 +20,6 @@ export default function AuthRequiredModal({ onClose, message }) {
                 className="card"
                 style={{ maxWidth: "400px", width: "90%", margin: 0, textAlign: "center" }}
             >
-                <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🔒</div>
                 <h2 style={{ marginBottom: "0.5rem" }}>Anmeldung erforderlich</h2>
                 <p style={{ color: "#7f8c8d", marginBottom: "1.5rem" }}>
                     {message || "Um diese Funktion zu nutzen, musst du angemeldet sein."}
