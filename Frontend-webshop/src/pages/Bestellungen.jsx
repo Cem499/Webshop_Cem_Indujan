@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import apiClient from "../services/api-client";
+import { useAuth } from "../context/AuthContext";
 
 export default function Bestellungen() {
+    const location = useLocation();
+    const { user } = useAuth();
+    const isAdmin = user?.role === "ADMIN";
     const [bestellungen, setBestellungen] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [positionen, setPositionen] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(location.state?.successMessage || '');
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +91,19 @@ export default function Bestellungen() {
                     console.error('Fehler beim Löschen:', err);
                     setError(`Fehler beim Löschen: ${err.message}`);
                 }
+            }
+        }
+    };
+
+    const handleStornieren = async (id) => {
+        if (window.confirm('Bestellung wirklich stornieren?')) {
+            try {
+                await apiClient.patch(`/bestellungen/${id}/status?status=STORNIERT`);
+                showMessage('Bestellung erfolgreich storniert');
+                setSelectedId(null);
+                loadBestellungen();
+            } catch (err) {
+                setError(`Fehler beim Stornieren: ${err.message}`);
             }
         }
     };
@@ -272,8 +290,18 @@ export default function Bestellungen() {
                     )}
                 </div>
                 <div className="action-buttons">
-                    <button className="btn btn-primary" onClick={() => handleEdit(selected)}>Bestellung bearbeiten</button>
-                    <button className="btn btn-danger" onClick={() => handleDelete(selected.id)}>Bestellung löschen</button>
+                    {isAdmin ? (
+                        <>
+                            <button className="btn btn-primary" onClick={() => handleEdit(selected)}>Bestellung bearbeiten</button>
+                            <button className="btn btn-danger" onClick={() => handleDelete(selected.id)}>Bestellung löschen</button>
+                        </>
+                    ) : (
+                        selected.status === 'OFFEN' && (
+                            <button className="btn btn-danger" onClick={() => handleStornieren(selected.id)}>
+                                Bestellung stornieren
+                            </button>
+                        )
+                    )}
                 </div>
             </div>
         );
@@ -356,8 +384,18 @@ export default function Bestellungen() {
                                 <td>
                                     <div className="action-buttons">
                                         <button className="btn btn-primary btn-sm" onClick={() => handleSelectBestellung(b)}>Details</button>
-                                        <button className="btn btn-primary btn-sm" onClick={() => handleEdit(b)}>Bearbeiten</button>
-                                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.id)}>Löschen</button>
+                                        {isAdmin ? (
+                                            <>
+                                                <button className="btn btn-primary btn-sm" onClick={() => handleEdit(b)}>Bearbeiten</button>
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(b.id)}>Löschen</button>
+                                            </>
+                                        ) : (
+                                            b.status === 'OFFEN' && (
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleStornieren(b.id)}>
+                                                    Stornieren
+                                                </button>
+                                            )
+                                        )}
                                     </div>
                                 </td>
                             </tr>

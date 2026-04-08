@@ -9,68 +9,71 @@ export default function ProdukteList() {
     const { isAuthenticated, user } = useAuth();
 
     const [produkte, setProdukte] = useState([]);
+    const [kategorien, setKategorien] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    // Steuert ob das Login-Modal angezeigt wird
+    const [kategorieFilter, setKategorieFilter] = useState('ALLE');
+    const [mengen, setMengen] = useState({});
     const [showAuthModal, setShowAuthModal] = useState(false);
 
     const isAdmin = user?.role === "ADMIN";
 
     useEffect(() => {
-        loadProdukte();
-    }, []);
-
-    const loadProdukte = async () => {
-        try {
-            setLoading(true);
-            const response = await apiClient.get("/produkte");
-            setProdukte(response.data);
-            setError(null);
-        } catch (err) {
+        Promise.all([
+            apiClient.get("/produkte"),
+            apiClient.get("/kategorien")
+        ]).then(([produkteRes, kategorienRes]) => {
+            setProdukte(produkteRes.data);
+            setKategorien(kategorienRes.data);
+        }).catch(err => {
             console.error('Fehler beim Laden:', err);
             setError('Fehler beim Laden. Läuft das Backend auf Port 8081?');
-        } finally {
-            setLoading(false);
-        }
-    };
+        }).finally(() => setLoading(false));
+    }, []);
 
     const deleteProdukt = async (id) => {
         if (!window.confirm("Produkt wirklich löschen?")) return;
         try {
-            const response = await apiClient.delete(`/produkte/${id}`);
-            if (response.status === 200 || response.status === 204) {
-                showMessage('Produkt erfolgreich gelöscht');
-                loadProdukte();
-            }
+            await apiClient.delete(`/produkte/${id}`);
+            setProdukte(prev => prev.filter(p => p.id !== id));
+            showMessage('Produkt erfolgreich gelöscht');
         } catch (err) {
             if (err.response?.status === 409) {
                 setError(err.response?.data || "Produkt wird noch in Bestellungen verwendet");
             } else {
-                console.error('Fehler beim Löschen:', err);
                 setError(`Fehler beim Löschen: ${err.message}`);
             }
         }
     };
 
+    function getMenge(produktId) {
+        return mengen[produktId] || 1;
+    }
+
+    function setMenge(produktId, value, maxBestand) {
+        const val = Math.max(1, Math.min(parseInt(value) || 1, maxBestand));
+        setMengen(prev => ({ ...prev, [produktId]: val }));
+    }
+
     function addToCart(produkt) {
-        // Nicht eingeloggte User können nicht bestellen – Modal anzeigen
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
         }
-
         if (produkt.bestand === 0) return;
+
+        const menge = getMenge(produkt.id);
         const cart = JSON.parse(localStorage.getItem("cart") || "[]");
         const existing = cart.find(item => item.id === produkt.id);
         if (existing) {
-            existing.menge += 1;
+            existing.menge = Math.min(existing.menge + menge, produkt.bestand);
         } else {
-            cart.push({ ...produkt, menge: 1 });
+            cart.push({ ...produkt, menge });
         }
         localStorage.setItem("cart", JSON.stringify(cart));
-        showMessage(`${produkt.name} zum Warenkorb hinzugefügt!`);
+        showMessage(`${produkt.name} (${menge}×) zum Warenkorb hinzugefügt!`);
         window.dispatchEvent(new Event("storage"));
     }
 
@@ -82,11 +85,13 @@ export default function ProdukteList() {
 
     const filteredProdukte = produkte.filter(prod => {
         const q = searchQuery.toLowerCase();
-        return (
+        const matchesSearch = (
             prod.name?.toLowerCase().includes(q) ||
             prod.beschreibung?.toLowerCase().includes(q) ||
             prod.kategorie?.name?.toLowerCase().includes(q)
         );
+        const matchesKategorie = kategorieFilter === 'ALLE' || String(prod.kategorie?.id) === kategorieFilter;
+        return matchesSearch && matchesKategorie;
     });
 
     if (loading) {
@@ -100,7 +105,6 @@ export default function ProdukteList() {
 
     return (
         <div>
-            {/* Login-Modal erscheint wenn nicht-eingeloggter User Warenkorb-Button klickt */}
             {showAuthModal && (
                 <AuthRequiredModal
                     onClose={() => setShowAuthModal(false)}
@@ -110,107 +114,143 @@ export default function ProdukteList() {
 
             <div className="page-header">
                 <h1>Produkte</h1>
-                {/* Neues Produkt nur für ADMIN sichtbar */}
                 {isAdmin && (
                     <button className="btn btn-primary" onClick={() => navigate("/new-produkt")}>
-                        Neues Produkt
+                        + Neues Produkt
                     </button>
                 )}
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ position: 'relative' }}>
-                    <h3 style={{ color: '#2c3e50' }}>Suchen</h3>
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Produkte suchen nach Name, Beschreibung oder Kategorie..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '2.5rem', paddingRight: searchQuery ? '2.5rem' : '0.75rem' }}
-                    />
-                    {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} style={{
-                            position: 'absolute', right: '0.75rem', top: '50%',
-                            transform: 'translateY(-50%)', background: 'none',
-                            border: 'none', cursor: 'pointer', color: '#95a5a6', fontSize: '1rem', padding: 0
-                        }}>✕</button>
-                    )}
-                </div>
-                {searchQuery && (
-                    <p style={{ marginTop: '0.5rem', color: '#7f8c8d', fontSize: '0.875rem' }}>
-                        {filteredProdukte.length} von {produkte.length} Produkte gefunden
-                    </p>
+            {/* Such- und Filterleiste */}
+            <div className="produkte-filter">
+                <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Suchen nach Name, Beschreibung..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ flex: 1 }}
+                />
+                <select
+                    className="form-control"
+                    value={kategorieFilter}
+                    onChange={(e) => setKategorieFilter(e.target.value)}
+                    style={{ width: 'auto', minWidth: '160px' }}
+                >
+                    <option value="ALLE">Alle Kategorien</option>
+                    {kategorien.map(k => (
+                        <option key={k.id} value={String(k.id)}>{k.name}</option>
+                    ))}
+                </select>
+                {(searchQuery || kategorieFilter !== 'ALLE') && (
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setSearchQuery(''); setKategorieFilter('ALLE'); }}>
+                        Filter zurücksetzen
+                    </button>
                 )}
             </div>
+
+            {(searchQuery || kategorieFilter !== 'ALLE') && (
+                <p style={{ marginBottom: '1rem', color: '#7f8c8d', fontSize: '0.875rem' }}>
+                    {filteredProdukte.length} von {produkte.length} Produkte gefunden
+                </p>
+            )}
+
+            {!isAuthenticated && (
+                <div className="alert" style={{
+                    background: '#e8f4f8', border: '1px solid #3498db',
+                    color: '#2980b9', marginBottom: '1rem'
+                }}>
+                    Melde dich an, um Produkte in den Warenkorb zu legen.
+                </div>
+            )}
 
             {message && <div className="alert alert-success">{message}</div>}
             {error && <div className="alert alert-error">{error}</div>}
 
-            {/* Hinweis für nicht-eingeloggte User */}
-            {!isAuthenticated && (
-                <div className="alert" style={{
-                    background: '#e8f4f8', border: '1px solid #3498db',
-                    color: '#2980b9', marginBottom: '1rem', padding: '0.75rem 1rem',
-                    borderRadius: '4px'
-                }}>
-                    Melde dich an oder registriere dich, um Produkte in den Warenkorb zu legen.
-                </div>
-            )}
-
             {filteredProdukte.length === 0 ? (
                 <div className="card empty-state">
-                    <h2>{searchQuery ? 'Keine Produkte gefunden' : 'Keine Produkte vorhanden'}</h2>
-                    {searchQuery && <p>Versuche einen anderen Suchbegriff.</p>}
+                    <h2>{searchQuery || kategorieFilter !== 'ALLE' ? 'Keine Produkte gefunden' : 'Keine Produkte vorhanden'}</h2>
+                    {(searchQuery || kategorieFilter !== 'ALLE') && <p>Versuche einen anderen Suchbegriff oder Filter.</p>}
                 </div>
             ) : (
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Preis</th>
-                            <th>Bestand</th>
-                            <th>Kategorie</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredProdukte.map(prod => (
-                            <tr key={prod.id}>
-                                <td>
-                                    <strong>{prod.name}</strong>
-                                    {prod.beschreibung && <><br /><small>{prod.beschreibung}</small></>}
-                                </td>
-                                <td>CHF {parseFloat(prod.preis).toFixed(2)}</td>
-                                <td style={{ color: prod.bestand > 0 ? 'green' : 'red' }}>{prod.bestand}</td>
-                                <td>{prod.kategorie?.name || '-'}</td>
-                                <td>
-                                    <div className="action-buttons">
+                <div className="produkte-grid">
+                    {filteredProdukte.map(prod => (
+                        <div key={prod.id} className={`produkt-card${prod.bestand === 0 ? ' produkt-card--ausverkauft' : ''}`}>
+                            <div className="produkt-card__image">
+                                <span className="produkt-card__emoji">🛍️</span>
+                                {prod.bestand === 0 && (
+                                    <span className="produkt-card__badge produkt-card__badge--out">Ausverkauft</span>
+                                )}
+                                {prod.bestand > 0 && prod.bestand <= 5 && (
+                                    <span className="produkt-card__badge produkt-card__badge--low">Nur noch {prod.bestand}!</span>
+                                )}
+                            </div>
+
+                            <div className="produkt-card__body">
+                                {prod.kategorie && (
+                                    <span className="produkt-card__kategorie">{prod.kategorie.name}</span>
+                                )}
+                                <h3 className="produkt-card__name">{prod.name}</h3>
+                                {prod.beschreibung && (
+                                    <p className="produkt-card__beschreibung">{prod.beschreibung}</p>
+                                )}
+                            </div>
+
+                            <div className="produkt-card__footer">
+                                <div className="produkt-card__preis">
+                                    CHF {parseFloat(prod.preis).toFixed(2)}
+                                </div>
+
+                                {prod.bestand > 0 ? (
+                                    <>
+                                        <div className="produkt-card__menge">
+                                            <button
+                                                className="menge-btn"
+                                                onClick={() => setMenge(prod.id, getMenge(prod.id) - 1, prod.bestand)}
+                                                disabled={getMenge(prod.id) <= 1}
+                                            >−</button>
+                                            <input
+                                                type="number"
+                                                className="menge-input"
+                                                value={getMenge(prod.id)}
+                                                onChange={(e) => setMenge(prod.id, e.target.value, prod.bestand)}
+                                                min="1"
+                                                max={prod.bestand}
+                                            />
+                                            <button
+                                                className="menge-btn"
+                                                onClick={() => setMenge(prod.id, getMenge(prod.id) + 1, prod.bestand)}
+                                                disabled={getMenge(prod.id) >= prod.bestand}
+                                            >+</button>
+                                        </div>
                                         <button
-                                            className="btn btn-success btn-sm"
+                                            className="btn btn-success"
+                                            style={{ width: '100%' }}
                                             onClick={() => addToCart(prod)}
-                                            disabled={prod.bestand === 0}
-                                            title={!isAuthenticated ? "Anmelden um zu bestellen" : ""}
                                         >
-                                            {prod.bestand === 0 ? "Nicht verfügbar" : "In den Warenkorb"}
+                                            In den Warenkorb
                                         </button>
-                                        {/* Bearbeiten und Löschen nur für ADMIN */}
-                                        {isAdmin && (
-                                            <>
-                                                <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
-                                                    Bearbeiten
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
-                                                    Löschen
-                                                </button>
-                                            </>
-                                        )}
+                                    </>
+                                ) : (
+                                    <button className="btn btn-secondary" style={{ width: '100%' }} disabled>
+                                        Nicht verfügbar
+                                    </button>
+                                )}
+
+                                {isAdmin && (
+                                    <div className="action-buttons" style={{ marginTop: '0.5rem' }}>
+                                        <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
+                                            Bearbeiten
+                                        </button>
+                                        <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
+                                            Löschen
+                                        </button>
                                     </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
     );

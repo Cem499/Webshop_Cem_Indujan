@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../services/api-client";
+import { useAuth } from "../context/AuthContext";
 
 export default function Warenkorb() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [cart, setCart] = useState([]);
     const [showCheckout, setShowCheckout] = useState(false);
     const [formData, setFormData] = useState({
@@ -16,13 +18,17 @@ export default function Warenkorb() {
     });
 
     useEffect(() => {
-        loadCart();
-    }, []);
-
-    function loadCart() {
         const data = JSON.parse(localStorage.getItem("cart") || "[]");
         setCart(data);
-    }
+        // Benutzerdaten vorausfüllen wenn eingeloggt
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                kundenName: user.username || prev.kundenName,
+                kundenEmail: user.email || prev.kundenEmail
+            }));
+        }
+    }, [user]);
 
     function updateMenge(id, menge) {
         if (menge <= 0) return removeItem(id);
@@ -81,8 +87,8 @@ export default function Warenkorb() {
             await Promise.all(positionRequests);
 
             localStorage.removeItem("cart");
-            alert("Bestellung erfolgreich aufgegeben!");
-            navigate("/bestellungen");
+            window.dispatchEvent(new Event("storage"));
+            navigate("/bestellungen", { state: { successMessage: "Bestellung erfolgreich aufgegeben!" } });
         } catch (error) {
             console.error("Fehler bei Bestellung:", error);
             alert("Fehler beim Aufgeben der Bestellung. Bitte versuche es erneut.");
