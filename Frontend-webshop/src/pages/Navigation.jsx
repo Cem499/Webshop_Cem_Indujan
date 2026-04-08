@@ -2,18 +2,20 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
-function useCartCount() {
+function useCartCount(userId) {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
+        const key = userId ? `cart_${userId}` : null;
         function update() {
-            const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+            if (!key) { setCount(0); return; }
+            const cart = JSON.parse(localStorage.getItem(key) || "[]");
             setCount(cart.reduce((sum, item) => sum + item.menge, 0));
         }
         update();
         window.addEventListener("storage", update);
         return () => window.removeEventListener("storage", update);
-    }, []);
+    }, [userId]);
 
     return count;
 }
@@ -21,7 +23,7 @@ function useCartCount() {
 export default function Navigation() {
     const { isAuthenticated, user, logout } = useAuth();
     const isAdmin = user?.role === "ADMIN";
-    const cartCount = useCartCount();
+    const cartCount = useCartCount(user?.id);
 
     return (
         <ul className="nav-menu">
@@ -30,6 +32,7 @@ export default function Navigation() {
 
             {isAuthenticated ? (
                 <>
+                    {/* Warenkorb für alle eingeloggten User */}
                     <li>
                         <Link to="/warenkorb" className="nav-link">
                             Warenkorb
@@ -38,12 +41,17 @@ export default function Navigation() {
                             )}
                         </Link>
                     </li>
-                    <li><Link to="/bestellungen" className="nav-link">Bestellungen</Link></li>
 
-                    {/* Admin-Bereich mit visueller Trennlinie */}
+                    {/* Eigene Bestellungen nur für KUNDE */}
+                    {!isAdmin && (
+                        <li><Link to="/bestellungen" className="nav-link">Bestellungen</Link></li>
+                    )}
+
+                    {/* Admin-Bereich */}
                     {isAdmin && (
                         <>
                             <li className="nav-divider" aria-hidden="true" />
+                            <li><Link to="/admin/meine-bestellungen" className="nav-link">Meine Bestellungen</Link></li>
                             <li><Link to="/kategorien" className="nav-link">Kategorien</Link></li>
                             <li><Link to="/admin/bestellungen" className="nav-link">Alle Bestellungen</Link></li>
                         </>

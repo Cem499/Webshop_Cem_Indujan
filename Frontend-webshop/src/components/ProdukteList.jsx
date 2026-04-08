@@ -3,6 +3,22 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../services/api-client";
 import { useAuth } from "../context/AuthContext";
 import AuthRequiredModal from "./AuthRequiredModal";
+import stuhlImg from "../assets/Stuhl.jpg";
+import esstischImg from "../assets/Esstisch.jpg";
+
+const produktBilder = {
+    stuhl: stuhlImg,
+    tisch: esstischImg,
+};
+
+function getProduktBild(name) {
+    if (!name) return null;
+    const key = name.toLowerCase();
+    for (const [keyword, img] of Object.entries(produktBilder)) {
+        if (key.includes(keyword)) return img;
+    }
+    return null;
+}
 
 export default function ProdukteList() {
     const navigate = useNavigate();
@@ -64,15 +80,16 @@ export default function ProdukteList() {
         }
         if (produkt.bestand === 0) return;
 
+        const cartKey = `cart_${user.id}`;
         const menge = getMenge(produkt.id);
-        const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        const cart = JSON.parse(localStorage.getItem(cartKey) || "[]");
         const existing = cart.find(item => item.id === produkt.id);
         if (existing) {
             existing.menge = Math.min(existing.menge + menge, produkt.bestand);
         } else {
             cart.push({ ...produkt, menge });
         }
-        localStorage.setItem("cart", JSON.stringify(cart));
+        localStorage.setItem(cartKey, JSON.stringify(cart));
         showMessage(`${produkt.name} (${menge}×) zum Warenkorb hinzugefügt!`);
         window.dispatchEvent(new Event("storage"));
     }
@@ -177,7 +194,15 @@ export default function ProdukteList() {
                     {filteredProdukte.map(prod => (
                         <div key={prod.id} className={`produkt-card${prod.bestand === 0 ? ' produkt-card--ausverkauft' : ''}`}>
                             <div className="produkt-card__image">
-                                <span className="produkt-card__emoji">🛍️</span>
+                                {getProduktBild(prod.name) ? (
+                                    <img
+                                        src={getProduktBild(prod.name)}
+                                        alt={prod.name}
+                                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.5rem' }}
+                                    />
+                                ) : (
+                                    <span className="produkt-card__emoji">🛍️</span>
+                                )}
                                 {prod.bestand === 0 && (
                                     <span className="produkt-card__badge produkt-card__badge--out">Ausverkauft</span>
                                 )}

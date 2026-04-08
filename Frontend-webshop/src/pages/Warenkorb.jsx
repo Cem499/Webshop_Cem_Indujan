@@ -17,8 +17,11 @@ export default function Warenkorb() {
         lieferLand: "Schweiz"
     });
 
+    const cartKey = user ? `cart_${user.id}` : null;
+
     useEffect(() => {
-        const data = JSON.parse(localStorage.getItem("cart") || "[]");
+        if (!cartKey) return;
+        const data = JSON.parse(localStorage.getItem(cartKey) || "[]");
         setCart(data);
         // Benutzerdaten vorausfüllen wenn eingeloggt
         if (user) {
@@ -28,7 +31,7 @@ export default function Warenkorb() {
                 kundenEmail: user.email || prev.kundenEmail
             }));
         }
-    }, [user]);
+    }, [user, cartKey]);
 
     function updateMenge(id, menge) {
         if (menge <= 0) return removeItem(id);
@@ -36,19 +39,19 @@ export default function Warenkorb() {
         const updated = cart.map(item =>
             item.id === id ? { ...item, menge: Math.min(menge, item.bestand) } : item
         );
-        localStorage.setItem("cart", JSON.stringify(updated));
+        localStorage.setItem(cartKey, JSON.stringify(updated));
         setCart(updated);
     }
 
     function removeItem(id) {
         const updated = cart.filter(item => item.id !== id);
-        localStorage.setItem("cart", JSON.stringify(updated));
+        localStorage.setItem(cartKey, JSON.stringify(updated));
         setCart(updated);
     }
 
     function clearCart() {
         if (window.confirm("Warenkorb leeren?")) {
-            localStorage.removeItem("cart");
+            localStorage.removeItem(cartKey);
             setCart([]);
         }
     }
@@ -86,7 +89,7 @@ export default function Warenkorb() {
             );
             await Promise.all(positionRequests);
 
-            localStorage.removeItem("cart");
+            localStorage.removeItem(cartKey);
             window.dispatchEvent(new Event("storage"));
             navigate("/bestellungen", { state: { successMessage: "Bestellung erfolgreich aufgegeben!" } });
         } catch (error) {
