@@ -3,6 +3,7 @@ package ch.wiss.webshop.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
@@ -61,6 +62,14 @@ public class Bestellung {
     @Size(max = 100, message = "Land darf maximal 100 Zeichen lang sein")
     @Column(name = "liefer_land", length = 100)
     private String lieferLand;
+
+    // Verknüpfung mit dem eingeloggten User der die Bestellung aufgegeben hat.
+    // Nullable damit bestehende Bestellungen ohne Owner weiterhin funktionieren.
+    // JsonIgnore verhindert zirkuläre Referenz in der JSON-Serialisierung.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    @JsonIgnore
+    private AppUser owner;
 
     /**
      * Standard-Konstruktor für JPA.
@@ -238,6 +247,14 @@ public class Bestellung {
      */
     public void setLieferLand(String lieferLand) {
         this.lieferLand = lieferLand;
+    }
+
+    public AppUser getOwner() {
+        return owner;
+    }
+
+    public void setOwner(AppUser owner) {
+        this.owner = owner;
     }
 
     @Override

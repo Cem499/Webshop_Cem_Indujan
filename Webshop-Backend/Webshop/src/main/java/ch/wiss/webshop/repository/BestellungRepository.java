@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import ch.wiss.webshop.model.AppUser;
 import ch.wiss.webshop.model.Bestellung;
 import ch.wiss.webshop.model.Bestellung.BestellStatus;
 
@@ -34,4 +35,12 @@ public interface BestellungRepository extends JpaRepository<Bestellung, Long> {
      * @return Liste der Bestellungen
      */
     List<Bestellung> findByKundenEmailOrderByErstelltAmDesc(String kundenEmail);
+
+    /**
+     * Findet alle Bestellungen eines bestimmten Users (für KUNDE-Ansicht).
+     *
+     * @param owner Der eingeloggte User
+     * @return Nur die eigenen Bestellungen des Users
+     */
+    List<Bestellung> findByOwnerOrderByErstelltAmDesc(AppUser owner);
 }
