@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import apiClient from "../services/api-client";
 
 export default function KategorienForm() {
     const navigate = useNavigate();
@@ -13,11 +14,11 @@ export default function KategorienForm() {
 
     useEffect(() => {
         if (isEdit) {
-            fetch(`http://localhost:8081/api/kategorien/${id}`)
-                .then(response => response.ok && response.json() || Promise.reject(response))
-                .then(data => setFormData({
-                    name: data.name,
-                    beschreibung: data.beschreibung || ""
+            // apiClient sendet JWT automatisch mit – kein manuelles Header-Setzen nötig
+            apiClient.get(`/kategorien/${id}`)
+                .then(response => setFormData({
+                    name: response.data.name,
+                    beschreibung: response.data.beschreibung || ""
                 }))
                 .catch(error => console.error(error));
         }
@@ -26,18 +27,12 @@ export default function KategorienForm() {
     function handleSubmit(event) {
         event.preventDefault();
 
-        const url = isEdit
-            ? `http://localhost:8081/api/kategorien/${id}`
-            : "http://localhost:8081/api/kategorien";
+        const request = isEdit
+            ? apiClient.put(`/kategorien/${id}`, formData)
+            : apiClient.post("/kategorien", formData);
 
-        const method = isEdit ? "PUT" : "POST";
-
-        fetch(url, {
-            method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        })
-            .then(response => response.ok && navigate("/kategorien") || Promise.reject(response))
+        request
+            .then(() => navigate("/kategorien"))
             .catch(error => console.error(error));
     }
 

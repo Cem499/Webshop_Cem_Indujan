@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "../services/api-client";
 
 export default function ProdukteList() {
     const navigate = useNavigate();
@@ -16,10 +17,9 @@ export default function ProdukteList() {
     const loadProdukte = async () => {
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:8081/api/produkte");
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            setProdukte(data);
+            // apiClient sendet JWT automatisch mit – bei 401 wird zur Login-Seite weitergeleitet
+            const response = await apiClient.get("/produkte");
+            setProdukte(response.data);
             setError(null);
         } catch (err) {
             console.error('Fehler beim Laden:', err);
@@ -32,19 +32,18 @@ export default function ProdukteList() {
     const deleteProdukt = async (id) => {
         if (!window.confirm("Produkt wirklich löschen?")) return;
         try {
-            const response = await fetch(`http://localhost:8081/api/produkte/${id}`, { method: "DELETE" });
-            if (response.ok || response.status === 204) {
+            const response = await apiClient.delete(`/produkte/${id}`);
+            if (response.status === 200 || response.status === 204) {
                 showMessage('Produkt erfolgreich gelöscht');
                 loadProdukte();
-            } else if (response.status === 409) {
-                const errorMsg = await response.text();
-                setError(errorMsg || "Produkt wird noch in Bestellungen verwendet");
-            } else {
-                throw new Error(`HTTP ${response.status}`);
             }
         } catch (err) {
-            console.error('Fehler beim Löschen:', err);
-            setError(`Fehler beim Löschen: ${err.message}`);
+            if (err.response?.status === 409) {
+                setError(err.response?.data || "Produkt wird noch in Bestellungen verwendet");
+            } else {
+                console.error('Fehler beim Löschen:', err);
+                setError(`Fehler beim Löschen: ${err.message}`);
+            }
         }
     };
 

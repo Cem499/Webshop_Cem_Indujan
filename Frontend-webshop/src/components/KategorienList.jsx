@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import apiClient from "../services/api-client";
 
 export default function KategorienList() {
     const [kategorien, setKategorien] = useState([]);
@@ -18,9 +19,9 @@ export default function KategorienList() {
     const loadKategorien = async () => {
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:8081/api/kategorien");
-            const data = await response.ok && await response.json() || Promise.reject(response);
-            setKategorien(data);
+            // apiClient sendet JWT automatisch mit – kein manuelles Header-Setzen nötig
+            const response = await apiClient.get("/kategorien");
+            setKategorien(response.data);
             setError(null);
         } catch (err) {
             console.error('Backend Fehler:', err);
@@ -47,19 +48,16 @@ export default function KategorienList() {
     const handleDelete = async (id) => {
         if (window.confirm('Wirklich löschen?')) {
             try {
-                const response = await fetch(`http://localhost:8081/api/kategorien/${id}`, { method: "DELETE" });
-                if (response.ok || response.status === 204) {
-                    showMessage('Kategorie gelöscht');
-                    loadKategorien();
-                } else if (response.status === 409) {
-                    const errorMsg = await response.text();
-                    setError(errorMsg || 'Kategorie wird noch von Produkten verwendet');
-                } else {
-                    throw new Error('Löschen fehlgeschlagen');
-                }
+                await apiClient.delete(`/kategorien/${id}`);
+                showMessage('Kategorie gelöscht');
+                loadKategorien();
             } catch (err) {
-                console.error('Fehler:', err);
-                setError('Fehler beim Löschen: ' + err.message);
+                if (err.response?.status === 409) {
+                    setError(err.response?.data || 'Kategorie wird noch von Produkten verwendet');
+                } else {
+                    console.error('Fehler:', err);
+                    setError('Fehler beim Löschen: ' + err.message);
+                }
             }
         }
     };
@@ -76,15 +74,11 @@ export default function KategorienList() {
         e.preventDefault();
         if (!validate()) return;
         try {
-            const url = editingId
-                ? `http://localhost:8081/api/kategorien/${editingId}`
-                : "http://localhost:8081/api/kategorien";
-            const method = editingId ? "PUT" : "POST";
-            await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
-            });
+            if (editingId) {
+                await apiClient.put(`/kategorien/${editingId}`, formData);
+            } else {
+                await apiClient.post("/kategorien", formData);
+            }
             showMessage(editingId ? 'Kategorie aktualisiert' : 'Kategorie erstellt');
             setShowForm(false);
             setFormData({ name: '', beschreibung: '' });

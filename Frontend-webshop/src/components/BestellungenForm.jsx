@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import apiClient from "../services/api-client";
 
 export default function BestellungenForm() {
     const navigate = useNavigate();
@@ -24,59 +25,35 @@ export default function BestellungenForm() {
         if (!isEditMode) return;
 
         setLoading(true);
-
-        fetch(`http://localhost:8081/api/bestellungen/${id}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Fehler beim Laden");
-                return res.json();
-            })
-            .then(data => setFormData(data))
+        // apiClient sendet JWT automatisch – Backend prüft ob User Zugriff auf diese Bestellung hat
+        apiClient.get(`/bestellungen/${id}`)
+            .then(response => setFormData(response.data))
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
-
     }, [id, isEditMode]);
-
 
     function handleChange(e) {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     }
-
 
     function handleSubmit(e) {
         e.preventDefault();
 
-        const method = isEditMode ? "PUT" : "POST";
-        const url = isEditMode
-            ? `http://localhost:8081/api/bestellungen/${id}`
-            : `http://localhost:8081/api/bestellungen`;
+        const request = isEditMode
+            ? apiClient.put(`/bestellungen/${id}`, formData)
+            : apiClient.post("/bestellungen", formData);
 
-        fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        })
-            .then(res => {
-                if (!res.ok) throw new Error("Fehler beim Speichern");
-                navigate("/bestellungen");
-            })
+        request
+            .then(() => navigate("/bestellungen"))
             .catch(err => setError(err.message));
     }
-
 
     function handleDelete() {
         if (!window.confirm("Wirklich löschen?")) return;
 
-        fetch(`http://localhost:8081/api/bestellungen/${id}`, {
-            method: "DELETE"
-        })
-            .then(res => {
-                if (!res.ok) throw new Error("Fehler beim Löschen");
-                navigate("/bestellungen");
-            })
+        apiClient.delete(`/bestellungen/${id}`)
+            .then(() => navigate("/bestellungen"))
             .catch(err => setError(err.message));
     }
 
@@ -85,98 +62,35 @@ export default function BestellungenForm() {
 
     return (
         <div>
-            <h1>
-                {isEditMode ? "Bestellung bearbeiten" : "Neue Bestellung"}
-            </h1>
+            <h1>{isEditMode ? "Bestellung bearbeiten" : "Neue Bestellung"}</h1>
 
             <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="kundenName"
-                    placeholder="Kundenname"
-                    value={formData.kundenName}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="email"
-                    name="kundenEmail"
-                    placeholder="Email"
-                    value={formData.kundenEmail}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="text"
-                    name="lieferStrasse"
-                    placeholder="Strasse"
-                    value={formData.lieferStrasse}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="text"
-                    name="lieferPlz"
-                    placeholder="PLZ"
-                    value={formData.lieferPlz}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="text"
-                    name="lieferStadt"
-                    placeholder="Stadt"
-                    value={formData.lieferStadt}
-                    onChange={handleChange}
-                    required
-                />
-
-                <input
-                    type="text"
-                    name="lieferLand"
-                    placeholder="Land"
-                    value={formData.lieferLand}
-                    onChange={handleChange}
-                    required
-                />
-
-                <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                >
+                <input type="text" name="kundenName" placeholder="Kundenname"
+                    value={formData.kundenName} onChange={handleChange} required />
+                <input type="email" name="kundenEmail" placeholder="Email"
+                    value={formData.kundenEmail} onChange={handleChange} required />
+                <input type="text" name="lieferStrasse" placeholder="Strasse"
+                    value={formData.lieferStrasse} onChange={handleChange} required />
+                <input type="text" name="lieferPlz" placeholder="PLZ"
+                    value={formData.lieferPlz} onChange={handleChange} required />
+                <input type="text" name="lieferStadt" placeholder="Stadt"
+                    value={formData.lieferStadt} onChange={handleChange} required />
+                <input type="text" name="lieferLand" placeholder="Land"
+                    value={formData.lieferLand} onChange={handleChange} required />
+                <select name="status" value={formData.status} onChange={handleChange}>
                     <option value="OFFEN">Offen</option>
                     <option value="BEZAHLT">Bezahlt</option>
                     <option value="STORNIERT">Storniert</option>
                 </select>
 
                 <div style={{ marginTop: "20px" }}>
-                    <button type="submit">
-                        {isEditMode ? "Aktualisieren" : "Erstellen"}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => navigate("/bestellungen")}
-                        style={{ marginLeft: "10px" }}
-                    >
+                    <button type="submit">{isEditMode ? "Aktualisieren" : "Erstellen"}</button>
+                    <button type="button" onClick={() => navigate("/bestellungen")} style={{ marginLeft: "10px" }}>
                         Abbrechen
                     </button>
-
                     {isEditMode && (
-                        <button
-                            type="button"
-                            onClick={handleDelete}
-                            style={{
-                                marginLeft: "10px",
-                                backgroundColor: "red",
-                                color: "white"
-                            }}
-                        >
+                        <button type="button" onClick={handleDelete}
+                            style={{ marginLeft: "10px", backgroundColor: "red", color: "white" }}>
                             Löschen
                         </button>
                     )}

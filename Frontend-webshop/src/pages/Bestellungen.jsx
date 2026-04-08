@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import apiClient from "../services/api-client";
 
 export default function Bestellungen() {
     const [bestellungen, setBestellungen] = useState([]);
@@ -29,10 +30,9 @@ export default function Bestellungen() {
     const loadBestellungen = async () => {
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:8081/api/bestellungen");
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            setBestellungen(data);
+            // apiClient sendet JWT automatisch – Backend gibt nur eigene Bestellungen zurück
+            const response = await apiClient.get("/bestellungen");
+            setBestellungen(response.data);
             setError(null);
         } catch (err) {
             console.error('Fehler beim Laden:', err);
@@ -44,10 +44,8 @@ export default function Bestellungen() {
 
     const loadPositionen = async (bestellungId) => {
         try {
-            const response = await fetch(`http://localhost:8081/api/bestellpositionen/bestellung/${bestellungId}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            setPositionen(data);
+            const response = await apiClient.get(`/bestellpositionen/bestellung/${bestellungId}`);
+            setPositionen(response.data);
         } catch (err) {
             console.error('Fehler beim Laden der Positionen:', err);
             setError('Fehler beim Laden der Positionen');
@@ -77,20 +75,17 @@ export default function Bestellungen() {
     const handleDelete = async (id) => {
         if (window.confirm('Wirklich löschen?')) {
             try {
-                const response = await fetch(`http://localhost:8081/api/bestellungen/${id}`, { method: "DELETE" });
-                if (response.ok || response.status === 204) {
-                    showMessage('Bestellung erfolgreich gelöscht');
-                    setSelectedId(null);
-                    loadBestellungen();
-                } else if (response.status === 409) {
-                    const errorMsg = await response.text();
-                    setError(errorMsg || 'Bestellung kann nicht gelöscht werden');
-                } else {
-                    throw new Error(`HTTP ${response.status}: Löschen fehlgeschlagen`);
-                }
+                await apiClient.delete(`/bestellungen/${id}`);
+                showMessage('Bestellung erfolgreich gelöscht');
+                setSelectedId(null);
+                loadBestellungen();
             } catch (err) {
-                console.error('Fehler beim Löschen:', err);
-                setError(`Fehler beim Löschen: ${err.message}`);
+                if (err.response?.status === 409) {
+                    setError(err.response?.data || 'Bestellung kann nicht gelöscht werden');
+                } else {
+                    console.error('Fehler beim Löschen:', err);
+                    setError(`Fehler beim Löschen: ${err.message}`);
+                }
             }
         }
     };
@@ -110,12 +105,7 @@ export default function Bestellungen() {
         e.preventDefault();
         if (!validate()) return;
         try {
-            const response = await fetch(`http://localhost:8081/api/bestellungen/${editingId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}: Aktualisierung fehlgeschlagen`);
+            await apiClient.put(`/bestellungen/${editingId}`, formData);
             showMessage('Bestellung erfolgreich aktualisiert');
             setShowForm(false);
             loadBestellungen();
@@ -294,7 +284,6 @@ export default function Bestellungen() {
             <div className="page-header">
                 <h1>Bestellungen</h1>
             </div>
-
 
             <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div style={{ position: 'relative', flex: '1', minWidth: '250px' }}>

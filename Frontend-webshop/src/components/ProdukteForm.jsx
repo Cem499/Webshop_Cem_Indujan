@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import apiClient from "../services/api-client";
 
 export default function ProdukteForm() {
     const navigate = useNavigate();
@@ -16,23 +17,25 @@ export default function ProdukteForm() {
     });
 
     useEffect(() => {
-        fetch("http://localhost:8081/api/kategorien")
-            .then(response => response.ok && response.json() || Promise.reject(response))
-            .then(data => setKategorien(data))
+        // apiClient sendet JWT automatisch – Backend kann Berechtigung prüfen
+        apiClient.get("/kategorien")
+            .then(response => setKategorien(response.data))
             .catch(error => console.error(error));
     }, []);
 
     useEffect(() => {
         if (isEdit) {
-            fetch(`http://localhost:8081/api/produkte/${id}`)
-                .then(response => response.ok && response.json() || Promise.reject(response))
-                .then(data => setFormData({
-                    name: data.name,
-                    beschreibung: data.beschreibung || "",
-                    preis: data.preis,
-                    bestand: data.bestand,
-                    kategorie: { id: data.kategorie?.id || "" }
-                }))
+            apiClient.get(`/produkte/${id}`)
+                .then(response => {
+                    const data = response.data;
+                    setFormData({
+                        name: data.name,
+                        beschreibung: data.beschreibung || "",
+                        preis: data.preis,
+                        bestand: data.bestand,
+                        kategorie: { id: data.kategorie?.id || "" }
+                    });
+                })
                 .catch(error => console.error(error));
         }
     }, [id, isEdit]);
@@ -48,18 +51,12 @@ export default function ProdukteForm() {
             kategorie: { id: parseInt(formData.kategorie.id) }
         };
 
-        const url = isEdit
-            ? `http://localhost:8081/api/produkte/${id}`
-            : "http://localhost:8081/api/produkte";
+        const request = isEdit
+            ? apiClient.put(`/produkte/${id}`, produktData)
+            : apiClient.post("/produkte", produktData);
 
-        const method = isEdit ? "PUT" : "POST";
-
-        fetch(url, {
-            method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(produktData)
-        })
-            .then(response => response.ok && navigate("/produkte") || Promise.reject(response))
+        request
+            .then(() => navigate("/produkte"))
             .catch(error => console.error(error));
     }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "../services/api-client";
 
 export default function Warenkorb() {
     const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function Warenkorb() {
         return cart.reduce((sum, item) => sum + (item.preis * item.menge), 0);
     }
 
-    function handleCheckout(event) {
+    async function handleCheckout(event) {
         event.preventDefault();
 
         const bestellungData = {
@@ -64,33 +65,28 @@ export default function Warenkorb() {
             gesamtbetrag: 0
         };
 
-        fetch("http://localhost:8081/api/bestellungen", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(bestellungData)
-        })
-            .then(response => response.ok && response.json() || Promise.reject(response))
-            .then(bestellung => {
-                const promises = cart.map(item =>
-                    fetch("http://localhost:8081/api/bestellpositionen", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            bestellung: { id: bestellung.id },
-                            produkt: { id: item.id },
-                            menge: item.menge,
-                            einzelpreis: item.preis
-                        })
-                    })
-                );
-                return Promise.all(promises);
-            })
-            .then(() => {
-                localStorage.removeItem("cart");
-                alert("Bestellung erfolgreich aufgegeben!");
-                navigate("/bestellungen");
-            })
-            .catch(error => console.error(error));
+        try {
+            // apiClient sendet JWT automatisch – Backend kann Bestellung dem eingeloggten User zuordnen
+            const response = await apiClient.post("/bestellungen", bestellungData);
+            const bestellung = response.data;
+
+            const positionRequests = cart.map(item =>
+                apiClient.post("/bestellpositionen", {
+                    bestellung: { id: bestellung.id },
+                    produkt: { id: item.id },
+                    menge: item.menge,
+                    einzelpreis: item.preis
+                })
+            );
+            await Promise.all(positionRequests);
+
+            localStorage.removeItem("cart");
+            alert("Bestellung erfolgreich aufgegeben!");
+            navigate("/bestellungen");
+        } catch (error) {
+            console.error("Fehler bei Bestellung:", error);
+            alert("Fehler beim Aufgeben der Bestellung. Bitte versuche es erneut.");
+        }
     }
 
     if (showCheckout) {
@@ -108,67 +104,33 @@ export default function Warenkorb() {
                     <form onSubmit={handleCheckout}>
                         <div className="form-group">
                             <label>Name *</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.kundenName}
-                                onChange={(e) => setFormData({ ...formData, kundenName: e.target.value })}
-                                required
-                            />
+                            <input type="text" className="form-control" value={formData.kundenName}
+                                onChange={(e) => setFormData({ ...formData, kundenName: e.target.value })} required />
                         </div>
-
                         <div className="form-group">
                             <label>Email *</label>
-                            <input
-                                type="email"
-                                className="form-control"
-                                value={formData.kundenEmail}
-                                onChange={(e) => setFormData({ ...formData, kundenEmail: e.target.value })}
-                                required
-                            />
+                            <input type="email" className="form-control" value={formData.kundenEmail}
+                                onChange={(e) => setFormData({ ...formData, kundenEmail: e.target.value })} required />
                         </div>
-
                         <div className="form-group">
                             <label>Strasse *</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.lieferStrasse}
-                                onChange={(e) => setFormData({ ...formData, lieferStrasse: e.target.value })}
-                                required
-                            />
+                            <input type="text" className="form-control" value={formData.lieferStrasse}
+                                onChange={(e) => setFormData({ ...formData, lieferStrasse: e.target.value })} required />
                         </div>
-
                         <div className="form-group">
                             <label>PLZ *</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.lieferPlz}
-                                onChange={(e) => setFormData({ ...formData, lieferPlz: e.target.value })}
-                                required
-                            />
+                            <input type="text" className="form-control" value={formData.lieferPlz}
+                                onChange={(e) => setFormData({ ...formData, lieferPlz: e.target.value })} required />
                         </div>
-
                         <div className="form-group">
                             <label>Stadt *</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.lieferStadt}
-                                onChange={(e) => setFormData({ ...formData, lieferStadt: e.target.value })}
-                                required
-                            />
+                            <input type="text" className="form-control" value={formData.lieferStadt}
+                                onChange={(e) => setFormData({ ...formData, lieferStadt: e.target.value })} required />
                         </div>
-
                         <div className="form-group">
                             <label>Land *</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.lieferLand}
-                                onChange={(e) => setFormData({ ...formData, lieferLand: e.target.value })}
-                            />
+                            <input type="text" className="form-control" value={formData.lieferLand}
+                                onChange={(e) => setFormData({ ...formData, lieferLand: e.target.value })} />
                         </div>
 
                         <div className="card" style={{ background: '#f8f9fa', marginTop: '1rem' }}>
@@ -225,12 +187,7 @@ export default function Warenkorb() {
                                     <td>CHF {item.preis.toFixed(2)}</td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                            <button
-                                                className="btn btn-sm"
-                                                onClick={() => updateMenge(item.id, item.menge - 1)}
-                                            >
-                                                -
-                                            </button>
+                                            <button className="btn btn-sm" onClick={() => updateMenge(item.id, item.menge - 1)}>-</button>
                                             <input
                                                 type="number"
                                                 value={item.menge}
@@ -239,22 +196,14 @@ export default function Warenkorb() {
                                                 min="1"
                                                 max={item.bestand}
                                             />
-                                            <button
-                                                className="btn btn-sm"
-                                                onClick={() => updateMenge(item.id, item.menge + 1)}
-                                                disabled={item.menge >= item.bestand}
-                                            >
-                                                +
-                                            </button>
+                                            <button className="btn btn-sm" onClick={() => updateMenge(item.id, item.menge + 1)}
+                                                disabled={item.menge >= item.bestand}>+</button>
                                         </div>
                                         <small style={{ color: '#7f8c8d' }}>Max: {item.bestand}</small>
                                     </td>
                                     <td><strong>CHF {(item.preis * item.menge).toFixed(2)}</strong></td>
                                     <td>
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() => removeItem(item.id)}
-                                        >
+                                        <button className="btn btn-danger btn-sm" onClick={() => removeItem(item.id)}>
                                             Entfernen
                                         </button>
                                     </td>
@@ -265,11 +214,7 @@ export default function Warenkorb() {
 
                     <div className="card" style={{ textAlign: 'right' }}>
                         <h2>Gesamtbetrag: CHF {getTotal().toFixed(2)}</h2>
-                        <button
-                            className="btn btn-success"
-                            onClick={() => setShowCheckout(true)}
-                            style={{ marginTop: '1rem' }}
-                        >
+                        <button className="btn btn-success" onClick={() => setShowCheckout(true)} style={{ marginTop: '1rem' }}>
                             Zur Kasse →
                         </button>
                     </div>
