@@ -150,12 +150,14 @@ public class AppUserService {
      * @throws org.springframework.security.core.AuthenticationException bei falschen Credentials
      */
     public LoginResponseDTO login(LoginRequestDTO request) {
-        // Spring Security übernimmt die Passwort-Prüfung
+        // Spring Security übernimmt die Passwort-Prüfung (AppUserDetailsService unterstützt E-Mail und Username)
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getUsernameOrEmail(), request.getPassword())
         );
 
-        AppUser user = appUserRepository.findByEmail(request.getEmail())
+        // User per E-Mail oder Username suchen (gleiche Logik wie im AppUserDetailsService)
+        AppUser user = appUserRepository.findByEmail(request.getUsernameOrEmail())
+                .or(() -> appUserRepository.findByUsername(request.getUsernameOrEmail()))
                 .orElseThrow(() -> new IllegalStateException(
                         "Benutzer nach Authentifizierung nicht gefunden – inkonsistenter Zustand"));
 
