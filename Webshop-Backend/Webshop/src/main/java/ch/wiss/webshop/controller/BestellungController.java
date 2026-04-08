@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,6 +59,21 @@ public class BestellungController {
         }
     }
 
+    /**
+     * Gibt nur die eigenen Bestellungen des eingeloggten Users zurück –
+     * funktioniert für ADMIN und KUNDE gleich.
+     */
+    @GetMapping("/meine")
+    public ResponseEntity<List<Bestellung>> getMeineBestellungen(
+            @AuthenticationPrincipal AppUser currentUser) {
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(
+                bestellungRepository.findByOwnerOrderByErstelltAmDesc(currentUser));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Bestellung> getBestellungById(
             @PathVariable Long id,
@@ -79,6 +95,7 @@ public class BestellungController {
     }
 
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Bestellung>> getBestellungenByStatus(@PathVariable String status) {
         try {
             BestellStatus bestellStatus = BestellStatus.valueOf(status.toUpperCase());
@@ -90,6 +107,7 @@ public class BestellungController {
     }
 
     @GetMapping("/kunde/{kundenName}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Bestellung>> getBestellungenByKunde(@PathVariable String kundenName) {
         List<Bestellung> bestellungen = bestellungRepository.findByKundenName(kundenName);
         return ResponseEntity.ok(bestellungen);
@@ -154,16 +172,33 @@ public class BestellungController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateBestellungStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status,
+            @AuthenticationPrincipal AppUser currentUser) {
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         Optional<Bestellung> bestellungOpt = bestellungRepository.findById(id);
         if (bestellungOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
+        Bestellung bestellung = bestellungOpt.get();
+
+        // KUNDE darf nur seine eigene Bestellung stornieren (nicht bezahlen oder andere Bestellungen ändern)
+        if (currentUser.getRole() != Role.ADMIN) {
+            if (bestellung.getOwner() == null || !bestellung.getOwner().getId().equals(currentUser.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            // KUNDE darf nur auf STORNIERT setzen
+            if (!status.equalsIgnoreCase("STORNIERT")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         try {
             BestellStatus bestellStatus = BestellStatus.valueOf(status.toUpperCase());
-            Bestellung bestellung = bestellungOpt.get();
             bestellung.setStatus(bestellStatus);
             return ResponseEntity.ok(bestellungRepository.save(bestellung));
         } catch (IllegalArgumentException e) {

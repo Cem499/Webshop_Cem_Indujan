@@ -1,6 +1,7 @@
 package ch.wiss.webshop.controller;
 
 import java.security.Principal;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -101,7 +102,7 @@ public class AuthController {
         } catch (Exception e) {
             // Bei falschen Credentials: 401 Unauthorized
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Ungültige E-Mail oder Passwort");
+                    .body(Map.of("message", "Ungültige E-Mail oder Passwort"));
         }
     }
 
