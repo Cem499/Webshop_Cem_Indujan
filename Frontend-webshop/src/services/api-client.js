@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// Zentrale axios-Instanz für alle API-Requests.
-// baseURL vereinfacht alle Fetch-Aufrufe – nur noch relative Pfade nötig.
+// alle requests laufen über diesen einen client, so steht die URL nur einmal im code
 const apiClient = axios.create({
     baseURL: "http://localhost:8081/api",
     timeout: 10000,
@@ -10,9 +9,8 @@ const apiClient = axios.create({
     }
 });
 
-// Request Interceptor: Token wird aus localStorage gelesen und bei jedem Request
-// mitgeschickt, damit das Backend den User über den JwtAuthenticationFilter
-// identifizieren kann.
+// läuft vor jedem request: token aus dem browser lesen und als header mitsenden
+// ohne diesen header erkennt das backend den user nicht
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("authToken");
@@ -24,19 +22,18 @@ apiClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Behandelt globale HTTP-Fehler zentral,
-// damit jede Komponente nicht selbst auf 401/403 reagieren muss.
+// läuft nach jeder antwort: 401 und 403 werden hier zentral behandelt
+// so muss das nicht in jeder einzelnen komponente wiederholt werden
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token abgelaufen oder ungültig – Session bereinigen und zur Login-Seite weiterleiten.
-            // Dies verhindert, dass der User mit einem ungültigen Token weiterarbeitet.
+            // token abgelaufen oder ungültig, browser aufräumen und zur loginseite
             localStorage.removeItem("authToken");
             localStorage.removeItem("userData");
             window.location.href = "/login";
         } else if (error.response?.status === 403) {
-            // User ist eingeloggt, hat aber keine Berechtigung für diese Ressource.
+            // user ist eingeloggt aber hat keine rechte für diese ressource
             console.log("Keine Berechtigung für diese Ressource");
         }
         return Promise.reject(error);

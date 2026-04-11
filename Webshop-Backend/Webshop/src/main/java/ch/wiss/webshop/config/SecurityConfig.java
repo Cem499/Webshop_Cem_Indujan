@@ -21,13 +21,9 @@ import ch.wiss.webshop.security.JwtAuthenticationFilter;
 import ch.wiss.webshop.service.AppUserDetailsService;
 
 /**
- * Spring Security Konfiguration für JWT-Authentifizierung.
- *
- * <p>Stateless Security: Keine Sessions, jeder Request muss einen gültigen JWT mitschicken.
- * Der {@link JwtAuthenticationFilter} prüft den Token vor jedem Request.</p>
- *
- * <p>{@code @EnableMethodSecurity} aktiviert {@code @PreAuthorize} auf Controller-Methoden,
- * damit einzelne Endpoints zusätzlich per Rolle abgesichert werden können.</p>
+ * Spring Security Konfiguration für JWT Authentifizierung.
+ * Stateless: keine Sessions, jeder Request braucht einen gültigen JWT.
+ * EnableMethodSecurity aktiviert @PreAuthorize auf den Controller-Methoden.
  */
 @Configuration
 @EnableWebSecurity
@@ -41,7 +37,7 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthFilter;
 
     /**
-     * Definiert welche Endpoints öffentlich zugänglich sind und welche Authentifizierung erfordern.
+     * Legt fest welche Endpoints öffentlich zugänglich sind und welche ein JWT erfordern.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -78,7 +74,6 @@ public class SecurityConfig {
 
     /**
      * BCrypt-Encoder für Passwort-Hashing.
-     * Faktor 10 ist der Standard – gut ausbalanciert zwischen Sicherheit und Performance.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -86,8 +81,7 @@ public class SecurityConfig {
     }
 
     /**
-     * AuthenticationProvider verbindet UserDetailsService mit PasswordEncoder.
-     * Spring Security verwendet diesen Provider bei authenticate()-Aufrufen.
+     * Verbindet UserDetailsService mit dem PasswordEncoder für die Passwortprüfung.
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -98,7 +92,7 @@ public class SecurityConfig {
     }
 
     /**
-     * AuthenticationManager wird im AppUserService für den Login-Ablauf benötigt.
+     * Wird im AppUserService für den Login verwendet.
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config)

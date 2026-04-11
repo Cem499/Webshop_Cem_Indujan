@@ -131,7 +131,7 @@ public class Bestellposition {
     @Override
     public String toString() {
         return "Bestellposition [id=" + id + ", bestellung=" + bestellung.getId() +
-               ", produkt=" + produkt.getName() + ", menge=" + menge +
-               ", einzelpreis=" + einzelpreis + "]";
+                ", produkt=" + produkt.getName() + ", menge=" + menge +
+                ", einzelpreis=" + einzelpreis + "]";
     }
 }

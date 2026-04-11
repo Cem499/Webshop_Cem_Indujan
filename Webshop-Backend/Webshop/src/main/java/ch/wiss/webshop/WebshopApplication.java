@@ -18,7 +18,7 @@ import jakarta.annotation.PostConstruct;
 @RestController
 public class WebshopApplication {
 
-	/**	
+	/**
 	 * Hauptmethode zum Starten der Applikation.
 	 *
 	 * @param args Kommandozeilen-Argumente
@@ -36,15 +36,14 @@ public class WebshopApplication {
 	public String index() {
 		return "Webshop mit REST API - Modul 295 LB - Cem Sin";
 	}
-	
+
 	@Autowired
 	DataSource dataSource;
 
 	@PostConstruct
 	public void printDbInfo() throws Exception {
-	    System.out.println("CONNECTED TO: " +
-	        dataSource.getConnection().getMetaData().getURL());
+		System.out.println("CONNECTED TO: " +
+				dataSource.getConnection().getMetaData().getURL());
 	}
-
 
 }

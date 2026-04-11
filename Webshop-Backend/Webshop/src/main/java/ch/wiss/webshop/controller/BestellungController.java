@@ -1,9 +1,6 @@
 package ch.wiss.webshop.controller;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,13 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import ch.wiss.webshop.model.AppUser;
 import ch.wiss.webshop.model.Bestellung;
-import ch.wiss.webshop.model.Bestellposition;
-import ch.wiss.webshop.model.Produkt;
 import ch.wiss.webshop.model.Role;
 import ch.wiss.webshop.model.Bestellung.BestellStatus;
-import ch.wiss.webshop.repository.BestellpositionRepository;
-import ch.wiss.webshop.repository.BestellungRepository;
-import ch.wiss.webshop.repository.ProduktRepository;
+import ch.wiss.webshop.service.BestellungService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -29,17 +22,10 @@ import jakarta.validation.Valid;
 public class BestellungController {
 
     @Autowired
-    private BestellungRepository bestellungRepository;
-
-    @Autowired
-    private BestellpositionRepository bestellpositionRepository;
-
-    @Autowired
-    private ProduktRepository produktRepository;
+    private BestellungService bestellungService;
 
     /**
-     * Gibt Bestellungen zurück – gefiltert nach Rolle:
-     * ADMIN sieht alle, KUNDE nur seine eigenen.
+     * Gibt Bestellungen zurück – ADMIN sieht alle, KUNDE nur seine eigenen.
      */
     @GetMapping
     public ResponseEntity<List<Bestellung>> getAllBestellungen(
@@ -48,21 +34,12 @@ public class BestellungController {
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
         if (currentUser.getRole() == Role.ADMIN) {
-            // ADMIN sieht alle Bestellungen aller Kunden
-            return ResponseEntity.ok(bestellungRepository.findAll());
-        } else {
-            // KUNDE sieht nur seine eigenen Bestellungen
-            return ResponseEntity.ok(
-                    bestellungRepository.findByOwnerOrderByErstelltAmDesc(currentUser));
+            return ResponseEntity.ok(bestellungService.findAll());
         }
+        return ResponseEntity.ok(bestellungService.findByOwner(currentUser));
     }
 
-    /**
-     * Gibt nur die eigenen Bestellungen des eingeloggten Users zurück –
-     * funktioniert für ADMIN und KUNDE gleich.
-     */
     @GetMapping("/meine")
     public ResponseEntity<List<Bestellung>> getMeineBestellungen(
             @AuthenticationPrincipal AppUser currentUser) {
@@ -70,8 +47,7 @@ public class BestellungController {
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(
-                bestellungRepository.findByOwnerOrderByErstelltAmDesc(currentUser));
+        return ResponseEntity.ok(bestellungService.findByOwner(currentUser));
     }
 
     @GetMapping("/{id}")
@@ -79,18 +55,16 @@ public class BestellungController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentUser) {
 
-        Optional<Bestellung> bestellung = bestellungRepository.findById(id);
-        if (bestellung.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        // KUNDE darf nur seine eigene Bestellung sehen
-        Bestellung b = bestellung.get();
+        Bestellung b = bestellungService.findById(id).orElse(null);
+        if (b == null)
+            return ResponseEntity.notFound().build();
         if (currentUser.getRole() != Role.ADMIN
                 && (b.getOwner() == null || !b.getOwner().getId().equals(currentUser.getId()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         return ResponseEntity.ok(b);
     }
 
@@ -99,8 +73,7 @@ public class BestellungController {
     public ResponseEntity<List<Bestellung>> getBestellungenByStatus(@PathVariable String status) {
         try {
             BestellStatus bestellStatus = BestellStatus.valueOf(status.toUpperCase());
-            List<Bestellung> bestellungen = bestellungRepository.findByStatus(bestellStatus);
-            return ResponseEntity.ok(bestellungen);
+            return ResponseEntity.ok(bestellungService.findByStatus(bestellStatus));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -109,35 +82,16 @@ public class BestellungController {
     @GetMapping("/kunde/{kundenName}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Bestellung>> getBestellungenByKunde(@PathVariable String kundenName) {
-        List<Bestellung> bestellungen = bestellungRepository.findByKundenName(kundenName);
-        return ResponseEntity.ok(bestellungen);
+        return ResponseEntity.ok(bestellungService.findByKundenName(kundenName));
     }
 
-    /**
-     * Neue Bestellung erstellen – Owner wird automatisch auf den eingeloggten User gesetzt.
-     */
     @PostMapping
     public ResponseEntity<Bestellung> createBestellung(
             @Valid @RequestBody Bestellung bestellung,
             @AuthenticationPrincipal AppUser currentUser) {
 
-        if (bestellung.getErstelltAm() == null) {
-            bestellung.setErstelltAm(LocalDateTime.now());
-        }
-        if (bestellung.getStatus() == null) {
-            bestellung.setStatus(BestellStatus.OFFEN);
-        }
-        if (bestellung.getGesamtbetrag() == null) {
-            bestellung.setGesamtbetrag(BigDecimal.ZERO);
-        }
-
-        // Owner setzen damit der User seine Bestellung später findet
-        if (currentUser != null) {
-            bestellung.setOwner(currentUser);
-        }
-
-        Bestellung savedBestellung = bestellungRepository.save(bestellung);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedBestellung);
+        Bestellung saved = bestellungService.create(bestellung, currentUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     /**
@@ -149,24 +103,20 @@ public class BestellungController {
             @Valid @RequestBody Bestellung bestellung,
             @AuthenticationPrincipal AppUser currentUser) {
 
-        Optional<Bestellung> existing = bestellungRepository.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        Bestellung existingBestellung = existing.get();
-
-        // KUNDE darf nur seine eigene Bestellung bearbeiten
+        Bestellung existing = bestellungService.findById(id).orElse(null);
+        if (existing == null)
+            return ResponseEntity.notFound().build();
         if (currentUser.getRole() != Role.ADMIN
-                && (existingBestellung.getOwner() == null
-                    || !existingBestellung.getOwner().getId().equals(currentUser.getId()))) {
+                && (existing.getOwner() == null
+                        || !existing.getOwner().getId().equals(currentUser.getId()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-        bestellung.setId(id);
-        bestellung.setOwner(existingBestellung.getOwner()); // Owner nicht überschreiben
-        Bestellung updatedBestellung = bestellungRepository.save(bestellung);
-        return ResponseEntity.ok(updatedBestellung);
+        return bestellungService.update(id, bestellung)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/status")
@@ -179,31 +129,23 @@ public class BestellungController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Optional<Bestellung> bestellungOpt = bestellungRepository.findById(id);
-        if (bestellungOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Bestellung bestellung = bestellungOpt.get();
-
-        // KUNDE darf nur seine eigene Bestellung stornieren (nicht bezahlen oder andere Bestellungen ändern)
-        if (currentUser.getRole() != Role.ADMIN) {
-            if (bestellung.getOwner() == null || !bestellung.getOwner().getId().equals(currentUser.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        return bestellungService.findById(id).map(bestellung -> {
+            if (currentUser.getRole() != Role.ADMIN) {
+                if (bestellung.getOwner() == null || !bestellung.getOwner().getId().equals(currentUser.getId())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+                if (!status.equalsIgnoreCase("STORNIERT")) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
             }
-            // KUNDE darf nur auf STORNIERT setzen
-            if (!status.equalsIgnoreCase("STORNIERT")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            try {
+                return bestellungService.updateStatus(id, status)
+                        .map(updated -> ResponseEntity.ok().body((Object) updated))
+                        .orElseGet(() -> ResponseEntity.notFound().build());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body("Ungültiger Status: " + status);
             }
-        }
-
-        try {
-            BestellStatus bestellStatus = BestellStatus.valueOf(status.toUpperCase());
-            bestellung.setStatus(bestellStatus);
-            return ResponseEntity.ok(bestellungRepository.save(bestellung));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Ungültiger Status: " + status);
-        }
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
@@ -211,32 +153,22 @@ public class BestellungController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentUser) {
 
-        Optional<Bestellung> existing = bestellungRepository.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        // KUNDE darf nur seine eigene Bestellung löschen
-        Bestellung bestellung = existing.get();
-        if (currentUser.getRole() != Role.ADMIN
-                && (bestellung.getOwner() == null
-                    || !bestellung.getOwner().getId().equals(currentUser.getId()))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        try {
-            List<Bestellposition> positionen = bestellpositionRepository.findByBestellungId(id);
-            for (Bestellposition position : positionen) {
-                Produkt produkt = position.getProdukt();
-                produkt.erhoeheBestand(position.getMenge());
-                produktRepository.save(produkt);
+        return bestellungService.findById(id).map(bestellung -> {
+            if (currentUser.getRole() != Role.ADMIN
+                    && (bestellung.getOwner() == null
+                            || !bestellung.getOwner().getId().equals(currentUser.getId()))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-            bestellpositionRepository.deleteAll(positionen);
-            bestellungRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Bestellung kann nicht gelöscht werden.");
-        }
+            try {
+                bestellungService.delete(id);
+                return ResponseEntity.noContent().build();
+            } catch (DataIntegrityViolationException e) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Bestellung kann nicht gelöscht werden.");
+            }
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

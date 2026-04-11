@@ -10,113 +10,63 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import ch.wiss.webshop.model.Kategorie;
-import ch.wiss.webshop.repository.KategorieRepository;
+import ch.wiss.webshop.service.KategorieService;
 import jakarta.validation.Valid;
 
-/**
- * REST-Controller für Kategorien.
- * Verwaltet CRUD-Operationen für Kategorien.
- */
 @RestController
 @RequestMapping(path = "/api/kategorien")
 public class KategorieController {
 
     @Autowired
-    private KategorieRepository kategorieRepository;
+    private KategorieService kategorieService;
 
-    /**
-     * Gibt alle Kategorien zurück.
-     *
-     * @return Liste aller Kategorien
-     */
     @GetMapping
     public ResponseEntity<List<Kategorie>> getAllKategorien() {
-        List<Kategorie> kategorien = kategorieRepository.findAll();
-        return ResponseEntity.ok(kategorien);
+        return ResponseEntity.ok(kategorieService.findAll());
     }
 
-    /**
-     * Gibt eine Kategorie anhand ihrer ID zurück.
-     *
-     * @param id Die ID der Kategorie
-     * @return Die Kategorie oder 404 wenn nicht gefunden
-     */
     @GetMapping("/{id}")
     public ResponseEntity<Kategorie> getKategorieById(@PathVariable Long id) {
-        Optional<Kategorie> kategorie = kategorieRepository.findById(id);
-        
-        return kategorie.map(ResponseEntity::ok)
-                       .orElseGet(() -> ResponseEntity.notFound().build());
+        return kategorieService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /**
-     * Sucht eine Kategorie nach Name.
-     *
-     * @param name Der Name der Kategorie
-     * @return Die Kategorie oder 404 wenn nicht gefunden
-     */
     @GetMapping("/name/{name}")
     public ResponseEntity<Kategorie> getKategorieByName(@PathVariable String name) {
-        Optional<Kategorie> kategorie = kategorieRepository.findByName(name);
-        
-        return kategorie.map(ResponseEntity::ok)
-                       .orElseGet(() -> ResponseEntity.notFound().build());
+        return kategorieService.findByName(name)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    /**
-     * Erstellt eine neue Kategorie.
-     *
-     * @param kategorie Die zu erstellende Kategorie
-     * @return Die erstellte Kategorie mit Status 201
-     */
     @PostMapping
     public ResponseEntity<?> createKategorie(@Valid @RequestBody Kategorie kategorie) {
-        // Prüfe ob Kategorie mit gleichem Namen bereits existiert
-        Optional<Kategorie> existing = kategorieRepository.findByName(kategorie.getName());
-        if (existing.isPresent()) {
+        if (kategorieService.existsByName(kategorie.getName())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Kategorie mit diesem Namen existiert bereits");
         }
-        
-        Kategorie savedKategorie = kategorieRepository.save(kategorie);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedKategorie);
+        return ResponseEntity.status(HttpStatus.CREATED).body(kategorieService.save(kategorie));
     }
 
-    /**
-     * Aktualisiert eine bestehende Kategorie.
-     *
-     * @param id        Die ID der zu aktualisierenden Kategorie
-     * @param kategorie Die aktualisierten Daten
-     * @return Die aktualisierte Kategorie oder 404 wenn nicht gefunden
-     */
     @PutMapping("/{id}")
     public ResponseEntity<Kategorie> updateKategorie(
             @PathVariable Long id,
             @Valid @RequestBody Kategorie kategorie) {
-        
-        if (kategorieRepository.findById(id).isEmpty()) {
+
+        if (kategorieService.findById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
         kategorie.setId(id);
-        Kategorie updatedKategorie = kategorieRepository.save(kategorie);
-        return ResponseEntity.ok(updatedKategorie);
+        return ResponseEntity.ok(kategorieService.save(kategorie));
     }
 
-    /**
-     * Löscht eine Kategorie.
-     *
-     * @param id Die ID der zu löschenden Kategorie
-     * @return 204 No Content bei Erfolg, 404 wenn nicht gefunden, 409 bei Constraint-Verletzung
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteKategorie(@PathVariable Long id) {
-        if (kategorieRepository.findById(id).isEmpty()) {
+        if (kategorieService.findById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
         try {
-            kategorieRepository.deleteById(id);
+            kategorieService.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)

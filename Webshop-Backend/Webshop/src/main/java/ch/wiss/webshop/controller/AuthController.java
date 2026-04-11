@@ -23,24 +23,7 @@ import jakarta.validation.Valid;
 
 /**
  * REST-Controller für Authentifizierung.
- *
- * <p>Stellt folgende Endpoints bereit:</p>
- * <ul>
- *   <li>{@code POST /api/auth/register} – Neuen Benutzer registrieren (Rolle: KUNDE)</li>
- *   <li>{@code POST /api/auth/login}    – Einloggen und JWT-Token erhalten</li>
- *   <li>{@code GET  /api/auth/me}       – Daten des aktuell eingeloggten Benutzers abrufen</li>
- * </ul>
- *
- * <p>Alle {@code /api/auth/**}-Pfade sind in der {@link ch.wiss.webshop.config.SecurityConfig}
- * als {@code permitAll()} konfiguriert. Das bedeutet, sie sind ohne Token erreichbar.
- * Der {@code /me}-Endpoint erzwingt jedoch Authentifizierung via {@code @PreAuthorize}.</p>
- *
- * <p>Fehlerbehandlung:</p>
- * <ul>
- *   <li>Duplikat-Username / E-Mail → {@code IllegalArgumentException} →
- *       {@link ch.wiss.webshop.exception.GlobalExceptionHandler} → HTTP 400</li>
- *   <li>Falsches Passwort → {@code AuthenticationException} → HTTP 401</li>
- * </ul>
+ * Endpoints: POST /api/auth/register, POST /api/auth/login, GET /api/auth/me
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -53,20 +36,11 @@ public class AuthController {
     @Autowired
     private AppUserRepository appUserRepository;
 
-    // =========================================================================
-    // POST /api/auth/register
-    // =========================================================================
-
     /**
      * Registriert einen neuen Benutzer mit der Rolle KUNDE.
      *
-     * <p>Bei Duplikat-Username oder Duplikat-E-Mail wird eine
-     * {@code IllegalArgumentException} geworfen, die vom
-     * {@link ch.wiss.webshop.exception.GlobalExceptionHandler} als HTTP 400 behandelt wird.
-     * Kein try-catch hier – der GlobalExceptionHandler übernimmt die Fehlerbehandlung.</p>
-     *
-     * @param request Registrierungsdaten (username, email, password) – mit @Valid validiert
-     * @return HTTP 201 mit {@link RegisterResponseDTO}
+     * @param request Registrierungsdaten (username, email, password)
+     * @return HTTP 201 mit RegisterResponseDTO
      */
     @PostMapping("/register")
     @Operation(summary = "Neuen Benutzer registrieren (Rolle: KUNDE)")
@@ -77,24 +51,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // =========================================================================
-    // POST /api/auth/login
-    // =========================================================================
-
     /**
-     * Meldet einen Benutzer an und gibt ein JWT-Token zurück.
-     *
-     * <p>Spring Security's {@code AuthenticationManager} prüft E-Mail + Passwort.
-     * Bei Erfolg generiert der {@link ch.wiss.webshop.service.JwtService} ein Token,
-     * das im {@code Authorization: Bearer <token>} Header für weitere Requests
-     * mitgesendet werden muss.</p>
+     * Meldet einen Benutzer an und gibt ein JWT Token zurück.
      *
      * @param request Login-Daten (email, password)
-     * @return HTTP 200 mit {@link LoginResponseDTO} (Token + Benutzerinfos),
-     *         oder HTTP 401 bei falschen Credentials
+     * @return HTTP 200 mit LoginResponseDTO oder HTTP 401 bei falschen Zugangsdaten
      */
     @PostMapping("/login")
-    @Operation(summary = "Benutzer anmelden und JWT-Token erhalten")
+    @Operation(summary = "Benutzer anmelden und JWT Token erhalten")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request) {
         try {
             LoginResponseDTO response = appUserService.login(request);
@@ -106,24 +70,11 @@ public class AuthController {
         }
     }
 
-    // =========================================================================
-    // GET /api/auth/me
-    // =========================================================================
-
     /**
      * Gibt die Daten des aktuell eingeloggten Benutzers zurück.
      *
-     * <p>Der {@link ch.wiss.webshop.security.JwtAuthenticationFilter} extrahiert die E-Mail
-     * aus dem JWT-Token und setzt sie als {@link Principal}. Mit dieser E-Mail wird der
-     * Benutzer aus der Datenbank geladen.</p>
-     *
-     * <p>{@code @PreAuthorize("isAuthenticated()")} stellt sicher, dass dieser Endpoint
-     * nur mit gültigem JWT-Token erreichbar ist – auch wenn {@code /api/auth/**} in der
-     * SecurityConfig als {@code permitAll()} markiert ist.</p>
-     *
      * @param principal Spring Security Principal (E-Mail des eingeloggten Benutzers)
-     * @return HTTP 200 mit {@link RegisterResponseDTO} (Benutzerinfos ohne Token),
-     *         oder HTTP 401 wenn nicht eingeloggt
+     * @return HTTP 200 mit Benutzerdaten oder HTTP 401 wenn nicht eingeloggt
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")

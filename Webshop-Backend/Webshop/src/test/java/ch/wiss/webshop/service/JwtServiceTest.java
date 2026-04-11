@@ -13,22 +13,22 @@ import ch.wiss.webshop.model.Role;
 
 /**
  * Unit/Integration-Tests für den {@link JwtService}.
- *
- * <p>Prüft die korrekte Erstellung, Validierung und Analyse von JWT-Tokens.
- * Verwendet H2 In-Memory Datenbank, damit keine echte MySQL-Verbindung benötigt wird.</p>
+ * Prüft die korrekte Erstellung, Validierung und Analyse von JWT-Tokens.
+ * Verwendet H2 In-Memory Datenbank, damit keine echte MySQL-Verbindung benötigt wird.
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-    "jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
-    "jwt.expiration=86400000",
-    "spring.datasource.url=jdbc:h2:mem:jwtservicetest;DB_CLOSE_DELAY=-1",
-    "spring.datasource.driver-class-name=org.h2.Driver",
-    "spring.datasource.username=sa",
-    "spring.datasource.password=",
-    // Hibernate-Dialect explizit auf H2 setzen – überschreibt den MySQLDialect aus application.properties
-    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+        "jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
+        "jwt.expiration=86400000",
+        "spring.datasource.url=jdbc:h2:mem:jwtservicetest;DB_CLOSE_DELAY=-1",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        // Hibernate-Dialect explizit auf H2 setzen – überschreibt den MySQLDialect aus
+        // application.properties
+        "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 class JwtServiceTest {
 
@@ -42,10 +42,6 @@ class JwtServiceTest {
         testUser = new AppUser("MaxMuster", "max@test.ch", "hashedPw", Role.KUNDE);
         testUser.setId(1L);
     }
-
-    // =========================================================================
-    // Ursprüngliche Tests (behalten)
-    // =========================================================================
 
     @Test
     void testGenerateToken_NichtNull() {
@@ -101,15 +97,10 @@ class JwtServiceTest {
         System.out.println("Test bestanden: true");
     }
 
-    // =========================================================================
-    // Pflicht-Tests mit spezifischen Methodennamen (Bewertungspunkt)
-    // =========================================================================
-
     /**
      * Test: Token generieren und Username korrekt extrahieren.
-     *
-     * <p>Prüft, dass der Subject-Claim im Token die E-Mail des Benutzers enthält,
-     * da {@link AppUser#getUsername()} die E-Mail zurückgibt.</p>
+     * Prüft, dass der Subject-Claim im Token die E-Mail des Benutzers enthält,
+     * da {@link AppUser#getUsername()} die E-Mail zurückgibt.
      */
     @Test
     void generateToken_extractUsername_returnsCorrectUsername() {
@@ -129,9 +120,8 @@ class JwtServiceTest {
 
     /**
      * Test: Gültiges Token wird als gültig erkannt.
-     *
-     * <p>Ein frisch generiertes Token für einen Benutzer soll bei der Validierung
-     * mit demselben Benutzer als gültig erkannt werden.</p>
+     * Ein frisch generiertes Token für einen Benutzer soll bei der Validierung
+     * mit demselben Benutzer als gültig erkannt werden.
      */
     @Test
     void validateToken_mitGueltigemToken_returnsTrue() {
@@ -147,9 +137,8 @@ class JwtServiceTest {
 
     /**
      * Test: Token mit falschem Benutzernamen wird als ungültig erkannt.
-     *
-     * <p>Ein Token, das für Benutzer A generiert wurde, soll bei der Validierung
-     * mit Benutzer B (anderer Username) als ungültig zurückgegeben werden.</p>
+     * Ein Token, das für Benutzer A generiert wurde, soll bei der Validierung
+     * mit Benutzer B (anderer Username) als ungültig zurückgegeben werden.
      */
     @Test
     void validateToken_mitFalschemUsername_returnsFalse() {

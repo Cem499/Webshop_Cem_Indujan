@@ -95,8 +95,8 @@ public class Bestellung {
      * @param lieferLand    Das Lieferland
      */
     public Bestellung(long id, BestellStatus status, BigDecimal gesamtbetrag, LocalDateTime erstelltAm,
-                      String kundenName, String kundenEmail, String lieferStrasse, String lieferPlz,
-                      String lieferStadt, String lieferLand) {
+            String kundenName, String kundenEmail, String lieferStrasse, String lieferPlz,
+            String lieferStadt, String lieferLand) {
         this.id = id;
         this.status = status;
         this.gesamtbetrag = gesamtbetrag;
@@ -259,8 +259,8 @@ public class Bestellung {
 
     @Override
     public String toString() {
-        return "Bestellung [id=" + id + ", status=" + status + 
-               ", gesamtbetrag=" + gesamtbetrag + ", kundenName=" + kundenName + "]";
+        return "Bestellung [id=" + id + ", status=" + status +
+                ", gesamtbetrag=" + gesamtbetrag + ", kundenName=" + kundenName + "]";
     }
 
     /**

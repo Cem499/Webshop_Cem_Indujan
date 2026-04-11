@@ -9,7 +9,7 @@ import ch.wiss.webshop.model.Kategorie;
 
 @Repository
 public interface KategorieRepository extends JpaRepository<Kategorie, Long> {
-    
+
     /**
      * Findet eine Kategorie anhand ihres Namens.
      *

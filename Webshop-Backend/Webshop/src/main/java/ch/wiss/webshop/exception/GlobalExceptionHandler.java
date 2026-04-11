@@ -11,9 +11,7 @@ import java.util.Map;
 
 /**
  * Globale Fehlerbehandlung für alle Controller.
- *
- * <p>{@code @RestControllerAdvice} fängt Exceptions aus allen Controllern ab
- * und wandelt sie in einheitliche HTTP-Antworten um.</p>
+ * Fängt Exceptions ab und wandelt sie in einheitliche HTTP-Antworten um.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,8 +25,8 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex) {
 
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage()));
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
     }
 

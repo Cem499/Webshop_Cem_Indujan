@@ -14,13 +14,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Integrations-Tests für den AuthController.
- *
- * <p>Verwendet H2 In-Memory Datenbank (via {@code @TestPropertySource}) und
- * MockMvc für HTTP-Requests ohne echten Netzwerk-Stack.</p>
- *
- * <p>{@code @DirtiesContext} stellt sicher, dass der Spring-Kontext nach dieser
+ * Verwendet H2 In-Memory Datenbank (via {@code @TestPropertySource}) und
+ * MockMvc für HTTP-Requests ohne echten Netzwerk-Stack.
+ * {@code @DirtiesContext} stellt sicher, dass der Spring-Kontext nach dieser
  * Testklasse zurückgesetzt wird, damit die H2-Datenbank geleert wird und keine
- * Daten zwischen Testklassen interferieren.</p>
+ * Daten zwischen Testklassen interferieren.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,9 +65,8 @@ class AuthControllerTest {
 
     /**
      * Test: Registrierung mit gültigen Daten → HTTP 201 Created.
-     *
-     * <p>Erwartet, dass ein neuer Benutzer erfolgreich erstellt wird und
-     * die Antwort die Benutzerinfos mit Rolle KUNDE enthält.</p>
+     * Erwartet, dass ein neuer Benutzer erfolgreich erstellt wird und
+     * die Antwort die Benutzerinfos mit Rolle KUNDE enthält.
      */
     @Test
     void register_mitGueltigenDaten_returns201() throws Exception {
@@ -88,11 +85,10 @@ class AuthControllerTest {
 
     /**
      * Test: Registrierung mit doppeltem Username → HTTP 400 Bad Request.
-     *
-     * <p>Zuerst wird ein Benutzer registriert. Ein zweiter Registrierungsversuch
+     * Zuerst wird ein Benutzer registriert. Ein zweiter Registrierungsversuch
      * mit dem gleichen Username (aber anderer E-Mail) muss mit 400 abgewiesen werden.
      * Der {@link ch.wiss.webshop.exception.GlobalExceptionHandler} wandelt die
-     * {@code IllegalArgumentException} des Services in HTTP 400 um.</p>
+     * {@code IllegalArgumentException} des Services in HTTP 400 um.
      */
     @Test
     void register_mitDoppeltemUsername_returns400() throws Exception {
@@ -121,9 +117,8 @@ class AuthControllerTest {
 
     /**
      * Test: Login mit falschem Passwort → HTTP 401 Unauthorized.
-     *
-     * <p>Der DataInitializer erstellt beim Start den Benutzer "admin@webshop.ch".
-     * Ein Login mit diesem Benutzer aber falschem Passwort muss 401 zurückgeben.</p>
+     * Der DataInitializer erstellt beim Start den Benutzer "admin@webshop.ch".
+     * Ein Login mit diesem Benutzer aber falschem Passwort muss 401 zurückgeben.
      */
     @Test
     void login_mitFalschemPasswort_returns401() throws Exception {
@@ -139,9 +134,8 @@ class AuthControllerTest {
 
     /**
      * Test: Login mit korrekten Daten → HTTP 200 mit Token und Benutzerdata.
-     *
-     * <p>Der DataInitializer erstellt beim Start den Admin-Benutzer.
-     * Login mit korrekten Credentials muss ein JWT-Token und Benutzerinfos zurückgeben.</p>
+     * Der DataInitializer erstellt beim Start den Admin-Benutzer.
+     * Login mit korrekten Credentials muss ein JWT-Token und Benutzerinfos zurückgeben.
      */
     @Test
     void login_mitKorrektenDaten_returnsTokenUndUserData() throws Exception {

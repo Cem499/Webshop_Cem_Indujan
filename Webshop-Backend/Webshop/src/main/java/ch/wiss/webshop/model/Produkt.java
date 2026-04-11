@@ -187,8 +187,8 @@ public class Produkt {
      */
     public void reduziereBestand(int menge) {
         if (!pruefeBestand(menge)) {
-            throw new IllegalArgumentException("Nicht genügend Bestand für Produkt: " + this.name + 
-                " (verfügbar: " + this.bestand + ", angefordert: " + menge + ")");
+            throw new IllegalArgumentException("Nicht genügend Bestand für Produkt: " + this.name +
+                    " (verfügbar: " + this.bestand + ", angefordert: " + menge + ")");
         }
         this.bestand = this.bestand - menge;
     }
@@ -200,14 +200,13 @@ public class Produkt {
      */
     public void erhoeheBestand(int menge) {
         if (menge > 0) {
-        	this.bestand = this.bestand + menge;
-        } 
+            this.bestand = this.bestand + menge;
+        }
     }
 
-    
     @Override
     public String toString() {
-        return "Produkt [id=" + id + ", name=" + name + ", preis=" + preis + 
-               ", bestand=" + bestand + ", kategorie=" + kategorie.getName() + "]";
+        return "Produkt [id=" + id + ", name=" + name + ", preis=" + preis +
+                ", bestand=" + bestand + ", kategorie=" + kategorie.getName() + "]";
     }
 }

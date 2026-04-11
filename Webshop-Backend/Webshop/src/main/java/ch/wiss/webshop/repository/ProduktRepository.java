@@ -9,7 +9,7 @@ import ch.wiss.webshop.model.Produkt;
 
 @Repository
 public interface ProduktRepository extends JpaRepository<Produkt, Long> {
-    
+
     /**
      * Findet alle Produkte einer bestimmten Kategorie.
      *
@@ -17,14 +17,14 @@ public interface ProduktRepository extends JpaRepository<Produkt, Long> {
      * @return Liste der Produkte
      */
     List<Produkt> findByKategorieId(Long kategorieId);
-    
+
     /**
      * Findet alle Produkte mit Bestand größer als 0.
      *
      * @return Liste der verfügbaren Produkte
      */
     List<Produkt> findByBestandGreaterThan(int bestand);
-    
+
     /**
      * Sucht Produkte nach Name (case-insensitive, teilweise Übereinstimmung).
      *

@@ -34,9 +34,9 @@ public class Kategorie {
     /**
      * Konstruktor mit allen Parametern.
      *
-     * @param id            Die eindeutige ID der Kategorie
-     * @param name          Der Name der Kategorie
-     * @param beschreibung  Die Beschreibung der Kategorie
+     * @param id           Die eindeutige ID der Kategorie
+     * @param name         Der Name der Kategorie
+     * @param beschreibung Die Beschreibung der Kategorie
      */
     public Kategorie(long id, String name, String beschreibung) {
         this.id = id;
@@ -47,8 +47,8 @@ public class Kategorie {
     /**
      * Konstruktor ohne ID (für neue Kategorien).
      *
-     * @param name          Der Name der Kategorie
-     * @param beschreibung  Die Beschreibung der Kategorie
+     * @param name         Der Name der Kategorie
+     * @param beschreibung Die Beschreibung der Kategorie
      */
     public Kategorie(String name, String beschreibung) {
         this.name = name;

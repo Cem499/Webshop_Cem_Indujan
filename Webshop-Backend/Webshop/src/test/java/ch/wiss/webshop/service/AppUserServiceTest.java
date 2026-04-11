@@ -55,7 +55,7 @@ class AppUserServiceTest {
         testUser.setId(1L);
     }
 
-    // --- Registrierung Tests ---
+    // Registrierung Tests
 
     @Test
     void testRegister_Erfolgreich() {
@@ -89,8 +89,7 @@ class AppUserServiceTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> appUserService.register(request)
-        );
+                () -> appUserService.register(request));
 
         System.out.println("Exception: " + exception.getMessage());
         assertTrue(exception.getMessage().contains("max@test.ch"));
@@ -152,8 +151,7 @@ class AppUserServiceTest {
 
         assertThrows(
                 BadCredentialsException.class,
-                () -> appUserService.login(request)
-        );
+                () -> appUserService.login(request));
 
         System.out.println("Exception korrekt geworfen");
         System.out.println("Test bestanden: true");

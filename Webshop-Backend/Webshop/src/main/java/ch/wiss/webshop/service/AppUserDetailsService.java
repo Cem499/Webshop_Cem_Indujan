@@ -9,14 +9,8 @@ import org.springframework.stereotype.Service;
 import ch.wiss.webshop.repository.AppUserRepository;
 
 /**
- * Spring Security UserDetailsService – lädt Benutzerdaten für die Authentifizierung.
- *
- * <p>Spring Security ruft {@link #loadUserByUsername(String)} während der Authentifizierung auf.
- * In diesem System wird als "Username" die E-Mail-Adresse verwendet, da sie systemweit
- * eindeutig ist. Der Anzeigename (username-Feld) kann doppelt vorkommen.</p>
- *
- * <p>Unterstützt Login sowohl per E-Mail als auch per Anzeigename:
- * zuerst wird per E-Mail gesucht, dann per Username (Fallback).</p>
+ * Lädt Benutzerdaten für Spring Security.
+ * Unterstützt Login per E-Mail oder Anzeigename.
  */
 @Service
 public class AppUserDetailsService implements UserDetailsService {
@@ -27,11 +21,8 @@ public class AppUserDetailsService implements UserDetailsService {
     /**
      * Lädt einen Benutzer anhand E-Mail oder Anzeigename.
      *
-     * <p>Wird vom {@link org.springframework.security.authentication.AuthenticationManager}
-     * beim Login aufgerufen, um den Benutzer für die Passwortprüfung zu laden.</p>
-     *
      * @param emailOrUsername E-Mail-Adresse oder Anzeigename
-     * @return {@link UserDetails} des gefundenen Benutzers
+     * @return UserDetails des gefundenen Benutzers
      * @throws UsernameNotFoundException wenn kein Benutzer gefunden wurde
      */
     @Override
