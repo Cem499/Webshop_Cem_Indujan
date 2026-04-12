@@ -121,7 +121,7 @@ export default function Register() {
                             type="submit"
                             className="btn btn-primary"
                             disabled={isSubmitting}
-                            style={{ width: "100%" }}
+                            style={{ width: "100%", justifyContent: "center" }}
                         >
                             {isSubmitting ? "Registrieren..." : "Registrieren"}
                         </button>

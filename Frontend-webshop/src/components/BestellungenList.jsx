@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import apiClient from "../services/api-client";
+import { formatDate, statusBadgeStyle } from "../utils/formatters";
 
 // Admin-Ansicht: zeigt alle Bestellungen aller Kunden.
 // Nur für ADMIN zugänglich – ProtectedRoute und @PreAuthorize im Backend schützen diesen Bereich.
@@ -61,15 +62,6 @@ export default function BestellungenList() {
         setTimeout(() => setMessage(''), 3000);
     };
 
-    const formatDate = (dateString) => new Date(dateString).toLocaleString('de-CH');
-
-    const statusBadgeStyle = (status) => ({
-        padding: '0.25rem 0.5rem',
-        borderRadius: '4px',
-        fontSize: '0.8rem',
-        background: status === 'OFFEN' ? '#fff3cd' : status === 'BEZAHLT' ? '#d4edda' : '#f8d7da',
-        color: status === 'OFFEN' ? '#856404' : status === 'BEZAHLT' ? '#155724' : '#721c24'
-    });
 
     const filteredBestellungen = bestellungen.filter(b => {
         const q = searchQuery.toLowerCase();

@@ -1,54 +1,69 @@
+import { Link } from "react-router-dom";
+
 export default function Home() {
     return (
         <div>
-            <div className="card" style={{
-                background: 'linear-gradient(140deg, #ffffff 10%, #2c3e50 50%)',
-                color: 'white',
-                textAlign: 'center',
-                padding: '3rem',
-                marginBottom: '2rem'
-            }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-                    Willkommen im Cem Sin Webshop!
-                </h1>
-                <p style={{ fontSize: '1.2rem' }}>
-                    Dein Online-Shop für alles was du brauchst
-                </p>
+            <div className="home-hero">
+                <div className="home-hero__content">
+                    <h1 className="home-hero__title">
+                        Alles was du<br />
+                        <span className="teal">brauchst</span>, online
+                    </h1>
+                    <p className="home-hero__sub">
+                        Entdecke unser breites Sortiment — einfach bestellen,
+                        schnell geliefert, sicher bezahlt.
+                    </p>
+                    <div className="home-hero__actions">
+                        <Link to="/produkte" className="btn-hero-primary">
+                            Produkte entdecken →
+                        </Link>
+                        <Link to="/register" className="btn-hero-secondary">
+                            Konto erstellen
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            <div className="home-stats">
+                <div className="home-stat">
+                    <div className="home-stat__number">100%</div>
+                    <div className="home-stat__label">Schweizer Qualität</div>
+                </div>
+                <div className="home-stat">
+                    <div className="home-stat__number">24h</div>
+                    <div className="home-stat__label">Schnelle Lieferung</div>
+                </div>
+                <div className="home-stat">
+                    <div className="home-stat__number">SSL</div>
+                    <div className="home-stat__label">Sicher & verschlüsselt</div>
+                </div>
             </div>
 
             <div className="features">
                 <div className="feature-box">
+                    <div className="feature-box__icon">◈</div>
                     <h3>Grosse Auswahl</h3>
-                    <p>Produkte aus verschiedenen Kategorien</p>
+                    <p>Produkte aus verschiedenen Kategorien — für jeden Bedarf das Richtige.</p>
                 </div>
                 <div className="feature-box">
+                    <div className="feature-box__icon">⟳</div>
                     <h3>Schnelle Lieferung</h3>
-                    <p>Deine Bestellung kommt sicher an</p>
+                    <p>Deine Bestellung kommt sicher und pünktlich an.</p>
                 </div>
                 <div className="feature-box">
+                    <div className="feature-box__icon">◎</div>
                     <h3>Einfach Bestellen</h3>
-                    <p>Sicher und unkompliziert</p>
+                    <p>Warenkorb füllen, Adresse eingeben, fertig.</p>
                 </div>
             </div>
 
-            <div className="card">
-                <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    So funktioniert's
-                </h2>
-                <ol
-                    style={{
-                        padding: '0 1rem',
-                        maxWidth: '600px',
-                        fontSize: '1.1rem',
-                        lineHeight: '2',
-                        margin: '0 auto',
-                        paddingLeft: '180px'
-                    }}
-                >
-                    <li>Kategorien durchstöbern</li>
-                    <li>Produkte zum Warenkorb hinzufügen</li>
-                    <li>Bestellung mit Lieferadresse aufgeben</li>
-                    <li>Fertig!</li>
+            <div className="home-steps">
+                <h2>So funktioniert's</h2>
+                <ol className="home-steps__grid">
+                    <li>Produkte durchstöbern</li>
+                    <li>Zum Warenkorb hinzufügen</li>
+                    <li>Lieferadresse eingeben</li>
+                    <li>Bestellung aufgeben</li>
                 </ol>
             </div>
         </div>

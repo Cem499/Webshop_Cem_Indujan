@@ -63,16 +63,7 @@ export default function Warenkorb() {
     async function handleCheckout(event) {
         event.preventDefault();
 
-        const bestellungData = {
-            kundenName: formData.kundenName,
-            kundenEmail: formData.kundenEmail,
-            lieferStrasse: formData.lieferStrasse,
-            lieferPlz: formData.lieferPlz,
-            lieferStadt: formData.lieferStadt,
-            lieferLand: formData.lieferLand,
-            status: "OFFEN",
-            gesamtbetrag: 0
-        };
+        const bestellungData = { ...formData, status: "OFFEN", gesamtbetrag: 0 };
 
         try {
             // apiClient sendet JWT automatisch – Backend kann Bestellung dem eingeloggten User zuordnen

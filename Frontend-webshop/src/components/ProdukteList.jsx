@@ -191,12 +191,14 @@ export default function ProdukteList() {
                 </div>
             ) : (
                 <div className="produkte-grid">
-                    {filteredProdukte.map(prod => (
+                    {filteredProdukte.map(prod => {
+                        const bild = getProduktBild(prod.name);
+                        return (
                         <div key={prod.id} className={`produkt-card${prod.bestand === 0 ? ' produkt-card--ausverkauft' : ''}`}>
                             <div className="produkt-card__image">
-                                {getProduktBild(prod.name) ? (
+                                {bild ? (
                                     <img
-                                        src={getProduktBild(prod.name)}
+                                        src={bild}
                                         alt={prod.name}
                                         style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.5rem' }}
                                     />
@@ -274,7 +276,8 @@ export default function ProdukteList() {
                                 )}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

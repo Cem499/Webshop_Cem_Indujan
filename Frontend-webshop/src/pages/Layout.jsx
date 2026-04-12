@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Navigation from "./Navigation";
+import logoImg from "../assets/Logo.png";
 
 export default function Layout() {
     return (
@@ -7,7 +8,7 @@ export default function Layout() {
             <nav className="navbar">
                 <div className="nav-container">
                     <h1 className="nav-logo">
-                        <img className="nav-logo-img" src="src/assets/Logo.png" alt="Logo" />
+                        <img className="nav-logo-img" src={logoImg} alt="Logo" />
 
                         <a href="/">Cem Sin Webshop</a>
                     </h1>
