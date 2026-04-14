@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
+// Custom Hook: liest den Warenkorb des Users aus localStorage und hält den Zähler aktuell.
+// Der storage-Event wird von ProdukteList und Warenkorb manuell gefeuert wenn sich der Cart ändert,
+// damit die Badge ohne Seiten-Reload aktualisiert wird.
 function useCartCount(userId) {
     const [count, setCount] = useState(0);
 

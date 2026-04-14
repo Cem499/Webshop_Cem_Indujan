@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import ch.wiss.webshop.model.Kategorie;
 
+/**
+ * Repository für Kategorie-Entitäten.
+ * Spring Data JPA generiert automatisch SQL aus den Methodennamen.
+ */
 @Repository
 public interface KategorieRepository extends JpaRepository<Kategorie, Long> {
 

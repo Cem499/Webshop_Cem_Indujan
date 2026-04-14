@@ -10,6 +10,7 @@ export default function Bestellungen() {
     const [positionen, setPositionen] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // successMessage wird von Warenkorb.jsx per location.state übergeben nach erfolgreicher Bestellung
     const [message, setMessage] = useState(location.state?.successMessage || '');
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALLE');

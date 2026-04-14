@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import ch.wiss.webshop.model.Produkt;
 
+/**
+ * Repository für Produkt-Entitäten.
+ * Spring Data JPA generiert automatisch SQL aus den Methodennamen.
+ */
 @Repository
 public interface ProduktRepository extends JpaRepository<Produkt, Long> {
 

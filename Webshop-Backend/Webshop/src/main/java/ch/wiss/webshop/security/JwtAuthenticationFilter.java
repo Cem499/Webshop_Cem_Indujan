@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String jwt = authHeader.substring(7); // "Bearer " (7 Zeichen) entfernen
+        final String jwt = authHeader.substring("Bearer ".length());
         final String userEmail;
 
         try {

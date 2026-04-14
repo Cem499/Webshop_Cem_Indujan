@@ -17,6 +17,7 @@ export default function Warenkorb() {
         lieferLand: "Schweiz"
     });
 
+    // Pro-User-Key verhindert Datenvermischung wenn mehrere Accounts denselben Browser nutzen
     const cartKey = user ? `cart_${user.id}` : null;
 
     useEffect(() => {
@@ -63,13 +64,15 @@ export default function Warenkorb() {
     async function handleCheckout(event) {
         event.preventDefault();
 
+        // Gesamtbetrag wird vom Backend nach dem Erstellen der Positionen berechnet – hier mit 0 initialisieren
         const bestellungData = { ...formData, status: "OFFEN", gesamtbetrag: 0 };
 
         try {
-            // apiClient sendet JWT automatisch – Backend kann Bestellung dem eingeloggten User zuordnen
+            // Schritt 1: Bestellung erstellen – apiClient sendet JWT, Backend setzt den Owner auf den eingeloggten User
             const response = await apiClient.post("/bestellungen", bestellungData);
             const bestellung = response.data;
 
+            // Schritt 2: Alle Positionen parallel anlegen – Backend reduziert den Bestand pro Position
             const positionRequests = cart.map(item =>
                 apiClient.post("/bestellpositionen", {
                     bestellung: { id: bestellung.id },
@@ -81,7 +84,9 @@ export default function Warenkorb() {
             await Promise.all(positionRequests);
 
             localStorage.removeItem(cartKey);
+            // Storage-Event manuell auslösen damit die Warenkorb-Badge in Navigation sofort 0 zeigt
             window.dispatchEvent(new Event("storage"));
+            // Erfolgstext per location.state übergeben – wird in Bestellungen.jsx ausgelesen
             navigate("/bestellungen", { state: { successMessage: "Bestellung erfolgreich aufgegeben!" } });
         } catch (error) {
             console.error("Fehler bei Bestellung:", error);

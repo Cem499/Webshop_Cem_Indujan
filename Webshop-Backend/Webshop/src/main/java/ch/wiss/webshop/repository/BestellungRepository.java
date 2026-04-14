@@ -9,6 +9,10 @@ import ch.wiss.webshop.model.AppUser;
 import ch.wiss.webshop.model.Bestellung;
 import ch.wiss.webshop.model.Bestellung.BestellStatus;
 
+/**
+ * Repository für Bestellungs-Entitäten.
+ * Spring Data JPA generiert automatisch SQL aus den Methodennamen.
+ */
 @Repository
 public interface BestellungRepository extends JpaRepository<Bestellung, Long> {
 

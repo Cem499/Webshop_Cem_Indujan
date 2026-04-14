@@ -15,6 +15,11 @@ import ch.wiss.webshop.repository.BestellungRepository;
 import ch.wiss.webshop.repository.ProduktRepository;
 import jakarta.transaction.Transactional;
 
+/**
+ * Service für Bestellpositions-Geschäftslogik.
+ * Verwaltet Bestandsänderungen beim Erstellen, Ändern und Löschen von Positionen
+ * und hält den Gesamtbetrag der Bestellung aktuell.
+ */
 @Service
 @Transactional
 public class BestellpositionService {
@@ -28,18 +33,41 @@ public class BestellpositionService {
     @Autowired
     private ProduktRepository produktRepository;
 
+    /**
+     * Gibt alle Bestellpositionen zurück.
+     *
+     * @return Liste aller Bestellpositionen
+     */
     public List<Bestellposition> findAll() {
         return bestellpositionRepository.findAll();
     }
 
+    /**
+     * Sucht eine Bestellposition anhand ihrer ID.
+     *
+     * @param id Die ID der Bestellposition
+     * @return Optional mit der Position oder leer wenn nicht gefunden
+     */
     public Optional<Bestellposition> findById(Long id) {
         return bestellpositionRepository.findById(id);
     }
 
+    /**
+     * Prüft ob eine Bestellung mit dieser ID existiert.
+     *
+     * @param bestellungId Die zu prüfende Bestell-ID
+     * @return true wenn die Bestellung existiert
+     */
     public boolean bestellungExistiertById(Long bestellungId) {
-        return bestellungRepository.findById(bestellungId).isPresent();
+        return bestellungRepository.existsById(bestellungId);
     }
 
+    /**
+     * Gibt alle Positionen einer bestimmten Bestellung zurück.
+     *
+     * @param bestellungId Die ID der Bestellung
+     * @return Liste der Positionen dieser Bestellung
+     */
     public List<Bestellposition> findByBestellungId(Long bestellungId) {
         return bestellpositionRepository.findByBestellungId(bestellungId);
     }
@@ -152,6 +180,12 @@ public class BestellpositionService {
         return true;
     }
 
+    /**
+     * Berechnet den Gesamtbetrag der Bestellung neu aus allen aktuellen Positionen
+     * und speichert das Ergebnis.
+     *
+     * @param bestellung Die Bestellung deren Gesamtbetrag aktualisiert werden soll
+     */
     private void aktualisiereGesamtbetrag(Bestellung bestellung) {
         List<Bestellposition> positionen = bestellpositionRepository.findByBestellungId(bestellung.getId());
         BigDecimal gesamtbetrag = positionen.stream()

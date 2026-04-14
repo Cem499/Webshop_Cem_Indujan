@@ -18,6 +18,10 @@ import ch.wiss.webshop.repository.BestellungRepository;
 import ch.wiss.webshop.repository.ProduktRepository;
 import jakarta.transaction.Transactional;
 
+/**
+ * Service für Bestellungs-Geschäftslogik.
+ * Verwaltet Bestellungen inkl. Statusänderungen und Bestandswiederherstellung beim Löschen.
+ */
 @Service
 @Transactional
 public class BestellungService {
@@ -31,22 +35,51 @@ public class BestellungService {
     @Autowired
     private ProduktRepository produktRepository;
 
+    /**
+     * Gibt alle Bestellungen zurück.
+     *
+     * @return Liste aller Bestellungen
+     */
     public List<Bestellung> findAll() {
         return bestellungRepository.findAll();
     }
 
+    /**
+     * Gibt alle Bestellungen eines Users zurück, sortiert nach Erstelldatum (neueste zuerst).
+     *
+     * @param owner Der User dessen Bestellungen gesucht werden
+     * @return Liste der Bestellungen des Users
+     */
     public List<Bestellung> findByOwner(AppUser owner) {
         return bestellungRepository.findByOwnerOrderByErstelltAmDesc(owner);
     }
 
+    /**
+     * Sucht eine Bestellung anhand ihrer ID.
+     *
+     * @param id Die ID der Bestellung
+     * @return Optional mit der Bestellung oder leer wenn nicht gefunden
+     */
     public Optional<Bestellung> findById(Long id) {
         return bestellungRepository.findById(id);
     }
 
+    /**
+     * Gibt alle Bestellungen mit einem bestimmten Status zurück.
+     *
+     * @param status Der gesuchte Bestellstatus
+     * @return Liste der Bestellungen mit diesem Status
+     */
     public List<Bestellung> findByStatus(BestellStatus status) {
         return bestellungRepository.findByStatus(status);
     }
 
+    /**
+     * Gibt alle Bestellungen eines Kunden nach Name zurück.
+     *
+     * @param kundenName Der Name des Kunden
+     * @return Liste der Bestellungen dieses Kunden
+     */
     public List<Bestellung> findByKundenName(String kundenName) {
         return bestellungRepository.findByKundenName(kundenName);
     }

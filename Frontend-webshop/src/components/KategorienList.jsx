@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import apiClient from "../services/api-client";
 
+// Zeigt alle Kategorien in einer Tabelle mit inline Create/Edit-Formular.
+// Create und Edit werden durch denselben Form-State gesteuert – editingId null = neues Objekt.
 export default function KategorienList() {
     const [kategorien, setKategorien] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,6 +64,7 @@ export default function KategorienList() {
         }
     };
 
+    // Client-seitige Validierung vor dem API-Request – spiegelt die Backend-Constraints wider
     const validate = () => {
         const newErrors = {};
         if (!formData.name.trim()) newErrors.name = 'Name erforderlich';

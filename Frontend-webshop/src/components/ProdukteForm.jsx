@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../services/api-client";
 
+// Formular für Create und Edit von Produkten.
+// Der Modus wird über die URL-Parameter bestimmt: /new-produkt = Create, /edit-produkt/:id = Edit.
 export default function ProdukteForm() {
     const navigate = useNavigate();
     const { id } = useParams();
+    // id aus URL-Parameter: gesetzt = Edit-Modus, nicht gesetzt = Create-Modus
     const isEdit = !!id;
 
     const [kategorien, setKategorien] = useState([]);
@@ -43,6 +46,7 @@ export default function ProdukteForm() {
     function handleSubmit(event) {
         event.preventDefault();
 
+        // Input-Felder liefern Strings – Backend erwartet korrekte Typen (Number, Object mit id)
         const produktData = {
             name: formData.name,
             beschreibung: formData.beschreibung,

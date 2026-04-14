@@ -28,6 +28,7 @@ import ch.wiss.webshop.repository.AppUserRepository;
 
 /**
  * Unit-Tests für AppUserService.
+ * Verwendet Mockito um Repository, PasswordEncoder, JwtService und AuthenticationManager zu isolieren.
  */
 @ExtendWith(MockitoExtension.class)
 class AppUserServiceTest {
@@ -49,6 +50,7 @@ class AppUserServiceTest {
 
     private AppUser testUser;
 
+    /** Initialisiert einen Test-User vor jedem Test. */
     @BeforeEach
     void setUp() {
         testUser = new AppUser("MaxMuster", "max@test.ch", "hashedPw", Role.KUNDE);
@@ -57,6 +59,9 @@ class AppUserServiceTest {
 
     // Registrierung Tests
 
+    /**
+     * Test: Registrierung mit gültigen Daten → RegisterResponseDTO mit korrekter E-Mail, Rolle KUNDE und Bestätigung.
+     */
     @Test
     void testRegister_Erfolgreich() {
         System.out.println("=== Test: Registrierung erfolgreich ===");
@@ -80,6 +85,9 @@ class AppUserServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: Registrierung mit bereits vergebener E-Mail → IllegalArgumentException mit E-Mail im Text.
+     */
     @Test
     void testRegister_EmailBereitsVergeben_WirftException() {
         System.out.println("=== Test: Registrierung - E-Mail bereits vergeben ===");
@@ -96,6 +104,9 @@ class AppUserServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: Neue Benutzer bekommen immer die Rolle KUNDE, unabhängig von den Eingabedaten.
+     */
     @Test
     void testRegister_RolleIstImmerKUNDE() {
         System.out.println("=== Test: Neue Benutzer bekommen immer Rolle KUNDE ===");
@@ -117,6 +128,9 @@ class AppUserServiceTest {
 
     // --- Login Tests ---
 
+    /**
+     * Test: Login mit korrekten Daten → LoginResponseDTO mit JWT-Token, E-Mail und Rolle KUNDE.
+     */
     @Test
     void testLogin_Erfolgreich() {
         System.out.println("=== Test: Login erfolgreich ===");
@@ -140,6 +154,9 @@ class AppUserServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: Login mit falschem Passwort → BadCredentialsException vom AuthenticationManager.
+     */
     @Test
     void testLogin_FalschesPasswort_WirftException() {
         System.out.println("=== Test: Login mit falschem Passwort ===");

@@ -37,12 +37,16 @@ class JwtServiceTest {
 
     private AppUser testUser;
 
+    /** Initialisiert einen Test-User vor jedem Test. */
     @BeforeEach
     void setUp() {
         testUser = new AppUser("MaxMuster", "max@test.ch", "hashedPw", Role.KUNDE);
         testUser.setId(1L);
     }
 
+    /**
+     * Test: generateToken gibt ein nicht-leeres Token zurück.
+     */
     @Test
     void testGenerateToken_NichtNull() {
         System.out.println("=== Test: Token generieren ===");
@@ -55,6 +59,10 @@ class JwtServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: extractUsername gibt die E-Mail des Benutzers aus dem Token zurück.
+     * AppUser#getUsername() gibt die E-Mail zurück, nicht den Anzeigenamen.
+     */
     @Test
     void testExtractUsername_GibtEmailZurueck() {
         System.out.println("=== Test: Username aus Token extrahieren ===");
@@ -69,6 +77,9 @@ class JwtServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: isTokenValid gibt true zurück für ein frisch generiertes Token des gleichen Users.
+     */
     @Test
     void testIsTokenValid_GueltigesToken_ReturnsTrue() {
         System.out.println("=== Test: Gültiges Token validieren ===");
@@ -81,6 +92,9 @@ class JwtServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: isTokenValid gibt false zurück wenn das Token für einen anderen User validiert wird.
+     */
     @Test
     void testIsTokenValid_FalscherBenutzer_ReturnsFalse() {
         System.out.println("=== Test: Token für anderen Benutzer ungültig ===");

@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import ch.wiss.webshop.model.Bestellposition;
 
+/**
+ * Repository für Bestellpositions-Entitäten.
+ * Spring Data JPA generiert automatisch SQL aus den Methodennamen.
+ */
 @Repository
 public interface BestellpositionRepository extends JpaRepository<Bestellposition, Long> {
 

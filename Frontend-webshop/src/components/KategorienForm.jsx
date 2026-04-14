@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../services/api-client";
 
+// Formular für Create und Edit von Kategorien.
+// /new-kategorie = Create, /edit-kategorie/:id = Edit (Daten werden beim Mount geladen).
 export default function KategorienForm() {
     const navigate = useNavigate();
     const { id } = useParams();
+    // id aus URL-Parameter: gesetzt = Edit-Modus, nicht gesetzt = Create-Modus
     const isEdit = !!id;
 
     const [formData, setFormData] = useState({

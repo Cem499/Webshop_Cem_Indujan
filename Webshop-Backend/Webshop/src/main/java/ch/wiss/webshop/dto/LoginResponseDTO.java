@@ -2,23 +2,9 @@ package ch.wiss.webshop.dto;
 
 /**
  * DTO für Login-Antworten mit JWT-Token und Benutzerinformationen.
- *
- * <p>
- * Dieses DTO enthält alle Informationen, die das Frontend nach einem
- * erfolgreichen Login benötigt:
- * </p>
- * <ul>
- * <li>{@code token} – Das JWT-Token für nachfolgende Requests (im
- * Authorization-Header)</li>
- * <li>{@code tokenType} – Immer "Bearer" (OAuth2-Standard)</li>
- * <li>{@code userId} – ID des Benutzers für Frontend-Logik</li>
- * <li>{@code username} – Anzeigename des Benutzers</li>
- * <li>{@code email} – E-Mail des Benutzers</li>
- * <li>{@code role} – Rolle (ADMIN oder KUNDE) für Zugriffssteuerung im
- * Frontend</li>
- * <li>{@code expiresIn} – Gültigkeitsdauer in Sekunden (Standard: 86400 =
- * 24h)</li>
- * </ul>
+ * Enthält alle Daten die das Frontend nach einem erfolgreichen Login benötigt:
+ * token, tokenType (Bearer), userId, username, email, role und expiresIn
+ * (Sekunden).
  */
 public class LoginResponseDTO {
 
@@ -70,60 +56,72 @@ public class LoginResponseDTO {
         this.expiresIn = expiresIn;
     }
 
-    // Getter / Setter
-
+    /** Getter-Methode */
     public String getToken() {
         return token;
     }
 
+    /** Setter-Methode */
     public void setToken(String token) {
         this.token = token;
     }
 
+    /** Getter-Methode */
     public String getTokenType() {
         return tokenType;
     }
 
+    /** Setter-Methode */
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
     }
 
+    /** Getter-Methode */
     public Long getUserId() {
         return userId;
     }
 
+    /** Setter-Methode */
     public void setUserId(Long userId) {
         this.userId = userId;
     }
 
+    /** Getter-Methode */
     public String getUsername() {
         return username;
     }
 
+    /** Setter-Methode */
     public void setUsername(String username) {
         this.username = username;
     }
 
+    /** Getter-Methode */
     public String getEmail() {
         return email;
     }
 
+    /** Setter-Methode */
     public void setEmail(String email) {
         this.email = email;
     }
 
+    /** Getter-Methode */
     public String getRole() {
         return role;
     }
 
+    /** Setter-Methode */
     public void setRole(String role) {
         this.role = role;
     }
 
+    /** Getter-Methode */
     public long getExpiresIn() {
         return expiresIn;
     }
 
+    /** Setter-Methode */
     public void setExpiresIn(long expiresIn) {
         this.expiresIn = expiresIn;
     }

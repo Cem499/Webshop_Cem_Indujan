@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../services/api-client";
 
+// Formular für Create und Edit von Bestellungen (Admin-Nutzung).
+// /edit-bestellung/:id = Edit (Daten werden beim Mount geladen).
 export default function BestellungenForm() {
     const navigate = useNavigate();
     const { id } = useParams();
 
+    // id aus URL-Parameter: gesetzt = Edit-Modus, nicht gesetzt = Create-Modus
     const isEditMode = !!id;
 
     const [formData, setFormData] = useState({

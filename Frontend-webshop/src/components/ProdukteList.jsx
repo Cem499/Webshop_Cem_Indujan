@@ -6,11 +6,15 @@ import AuthRequiredModal from "./AuthRequiredModal";
 import stuhlImg from "../assets/Stuhl.jpg";
 import esstischImg from "../assets/Esstisch.jpg";
 
+// Keyword → Bild Mapping: Produktname wird gegen diese Keywords geprüft (lowercase, Teilübereinstimmung).
+// Neue Produkte mit Bild: Keyword hier eintragen und Import oben hinzufügen.
 const produktBilder = {
     stuhl: stuhlImg,
     tisch: esstischImg,
 };
 
+// Sucht das passende Bild anhand eines Keywords im Produktnamen.
+// Gibt null zurück wenn kein Keyword übereinstimmt → Fallback-Emoji wird angezeigt.
 function getProduktBild(name) {
     if (!name) return null;
     const key = name.toLowerCase();
@@ -80,17 +84,21 @@ export default function ProdukteList() {
         }
         if (produkt.bestand === 0) return;
 
+        // Warenkorb ist pro User getrennt – cart_<userId> verhindert Vermischung bei mehreren Usern
         const cartKey = `cart_${user.id}`;
         const menge = getMenge(produkt.id);
         const cart = JSON.parse(localStorage.getItem(cartKey) || "[]");
         const existing = cart.find(item => item.id === produkt.id);
         if (existing) {
+            // Bestehende Position: Menge erhöhen, aber nicht über den Bestand hinaus
             existing.menge = Math.min(existing.menge + menge, produkt.bestand);
         } else {
             cart.push({ ...produkt, menge });
         }
         localStorage.setItem(cartKey, JSON.stringify(cart));
         showMessage(`${produkt.name} (${menge}×) zum Warenkorb hinzugefügt!`);
+        // Manuell gefeuert damit useCartCount() in Navigation.jsx sofort reagiert,
+        // da localStorage.setItem keinen storage-Event im selben Tab auslöst.
         window.dispatchEvent(new Event("storage"));
     }
 
@@ -100,6 +108,7 @@ export default function ProdukteList() {
         setTimeout(() => setMessage(''), 3000);
     };
 
+    // Kombinierter Filter: Suchtext (Name, Beschreibung, Kategorie) UND Kategorie-Dropdown müssen beide passen
     const filteredProdukte = produkte.filter(prod => {
         const q = searchQuery.toLowerCase();
         const matchesSearch = (
@@ -107,6 +116,7 @@ export default function ProdukteList() {
             prod.beschreibung?.toLowerCase().includes(q) ||
             prod.kategorie?.name?.toLowerCase().includes(q)
         );
+        // Kategorie-ID als String vergleichen, da select-value immer String ist
         const matchesKategorie = kategorieFilter === 'ALLE' || String(prod.kategorie?.id) === kategorieFilter;
         return matchesSearch && matchesKategorie;
     });
@@ -194,88 +204,88 @@ export default function ProdukteList() {
                     {filteredProdukte.map(prod => {
                         const bild = getProduktBild(prod.name);
                         return (
-                        <div key={prod.id} className={`produkt-card${prod.bestand === 0 ? ' produkt-card--ausverkauft' : ''}`}>
-                            <div className="produkt-card__image">
-                                {bild ? (
-                                    <img
-                                        src={bild}
-                                        alt={prod.name}
-                                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.5rem' }}
-                                    />
-                                ) : (
-                                    <span className="produkt-card__emoji">🛍️</span>
-                                )}
-                                {prod.bestand === 0 && (
-                                    <span className="produkt-card__badge produkt-card__badge--out">Ausverkauft</span>
-                                )}
-                                {prod.bestand > 0 && prod.bestand <= 5 && (
-                                    <span className="produkt-card__badge produkt-card__badge--low">Nur noch {prod.bestand}!</span>
-                                )}
-                            </div>
-
-                            <div className="produkt-card__body">
-                                {prod.kategorie && (
-                                    <span className="produkt-card__kategorie">{prod.kategorie.name}</span>
-                                )}
-                                <h3 className="produkt-card__name">{prod.name}</h3>
-                                {prod.beschreibung && (
-                                    <p className="produkt-card__beschreibung">{prod.beschreibung}</p>
-                                )}
-                            </div>
-
-                            <div className="produkt-card__footer">
-                                <div className="produkt-card__preis">
-                                    CHF {parseFloat(prod.preis).toFixed(2)}
+                            <div key={prod.id} className={`produkt-card${prod.bestand === 0 ? ' produkt-card--ausverkauft' : ''}`}>
+                                <div className="produkt-card__image">
+                                    {bild ? (
+                                        <img
+                                            src={bild}
+                                            alt={prod.name}
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.5rem' }}
+                                        />
+                                    ) : (
+                                        <span className="produkt-card__emoji">🛍️</span>
+                                    )}
+                                    {prod.bestand === 0 && (
+                                        <span className="produkt-card__badge produkt-card__badge--out">Ausverkauft</span>
+                                    )}
+                                    {prod.bestand > 0 && prod.bestand <= 5 && (
+                                        <span className="produkt-card__badge produkt-card__badge--low">Nur noch {prod.bestand}!</span>
+                                    )}
                                 </div>
 
-                                {prod.bestand > 0 ? (
-                                    <>
-                                        <div className="produkt-card__menge">
-                                            <button
-                                                className="menge-btn"
-                                                onClick={() => setMenge(prod.id, getMenge(prod.id) - 1, prod.bestand)}
-                                                disabled={getMenge(prod.id) <= 1}
-                                            >−</button>
-                                            <input
-                                                type="number"
-                                                className="menge-input"
-                                                value={getMenge(prod.id)}
-                                                onChange={(e) => setMenge(prod.id, e.target.value, prod.bestand)}
-                                                min="1"
-                                                max={prod.bestand}
-                                            />
-                                            <button
-                                                className="menge-btn"
-                                                onClick={() => setMenge(prod.id, getMenge(prod.id) + 1, prod.bestand)}
-                                                disabled={getMenge(prod.id) >= prod.bestand}
-                                            >+</button>
-                                        </div>
-                                        <button
-                                            className="btn btn-success"
-                                            style={{ width: '100%' }}
-                                            onClick={() => addToCart(prod)}
-                                        >
-                                            In den Warenkorb
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button className="btn btn-secondary" style={{ width: '100%' }} disabled>
-                                        Nicht verfügbar
-                                    </button>
-                                )}
+                                <div className="produkt-card__body">
+                                    {prod.kategorie && (
+                                        <span className="produkt-card__kategorie">{prod.kategorie.name}</span>
+                                    )}
+                                    <h3 className="produkt-card__name">{prod.name}</h3>
+                                    {prod.beschreibung && (
+                                        <p className="produkt-card__beschreibung">{prod.beschreibung}</p>
+                                    )}
+                                </div>
 
-                                {isAdmin && (
-                                    <div className="action-buttons" style={{ marginTop: '0.5rem' }}>
-                                        <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
-                                            Bearbeiten
-                                        </button>
-                                        <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
-                                            Löschen
-                                        </button>
+                                <div className="produkt-card__footer">
+                                    <div className="produkt-card__preis">
+                                        CHF {parseFloat(prod.preis).toFixed(2)}
                                     </div>
-                                )}
+
+                                    {prod.bestand > 0 ? (
+                                        <>
+                                            <div className="produkt-card__menge">
+                                                <button
+                                                    className="menge-btn"
+                                                    onClick={() => setMenge(prod.id, getMenge(prod.id) - 1, prod.bestand)}
+                                                    disabled={getMenge(prod.id) <= 1}
+                                                >−</button>
+                                                <input
+                                                    type="number"
+                                                    className="menge-input"
+                                                    value={getMenge(prod.id)}
+                                                    onChange={(e) => setMenge(prod.id, e.target.value, prod.bestand)}
+                                                    min="1"
+                                                    max={prod.bestand}
+                                                />
+                                                <button
+                                                    className="menge-btn"
+                                                    onClick={() => setMenge(prod.id, getMenge(prod.id) + 1, prod.bestand)}
+                                                    disabled={getMenge(prod.id) >= prod.bestand}
+                                                >+</button>
+                                            </div>
+                                            <button
+                                                className="btn btn-success"
+                                                style={{ width: '100%' }}
+                                                onClick={() => addToCart(prod)}
+                                            >
+                                                In den Warenkorb
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button className="btn btn-secondary" style={{ width: '100%' }} disabled>
+                                            Nicht verfügbar
+                                        </button>
+                                    )}
+
+                                    {isAdmin && (
+                                        <div className="action-buttons" style={{ marginTop: '0.5rem' }}>
+                                            <button className="btn btn-primary btn-sm" onClick={() => navigate(`/edit-produkt/${prod.id}`)}>
+                                                Bearbeiten
+                                            </button>
+                                            <button className="btn btn-danger btn-sm" onClick={() => deleteProdukt(prod.id)}>
+                                                Löschen
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
                         );
                     })}
                 </div>

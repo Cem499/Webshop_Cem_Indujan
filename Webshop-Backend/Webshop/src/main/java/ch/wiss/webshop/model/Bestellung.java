@@ -249,10 +249,12 @@ public class Bestellung {
         this.lieferLand = lieferLand;
     }
 
+    /** Getter-Methode */
     public AppUser getOwner() {
         return owner;
     }
 
+    /** Setter-Methode */
     public void setOwner(AppUser owner) {
         this.owner = owner;
     }
@@ -277,6 +279,7 @@ public class Bestellung {
             this.wert = wert;
         }
 
+        /** Getter-Methode */
         public String getWert() {
             return wert;
         }

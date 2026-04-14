@@ -19,6 +19,7 @@ import ch.wiss.webshop.repository.KategorieRepository;
 
 /**
  * Unit-Tests für KategorieService.
+ * Verwendet Mockito um das Repository zu isolieren – kein Datenbankzugriff.
  */
 @ExtendWith(MockitoExtension.class)
 class KategorieServiceTest {
@@ -29,6 +30,10 @@ class KategorieServiceTest {
     @InjectMocks
     private KategorieService kategorieService;
 
+    /**
+     * Test: findAll gibt alle Kategorien aus dem Repository zurück.
+     * Erwartet eine Liste mit genau 2 Einträgen.
+     */
     @Test
     void testFindAll_GibtAlleKategorienZurueck() {
         System.out.println("=== Test: Alle Kategorien abrufen ===");
@@ -44,6 +49,10 @@ class KategorieServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: findById gibt die Kategorie zurück wenn sie existiert.
+     * Erwartet Optional mit Name "Elektronik".
+     */
     @Test
     void testFindById_GefundeneKategorie() {
         System.out.println("=== Test: Kategorie nach ID suchen - gefunden ===");
@@ -59,6 +68,9 @@ class KategorieServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: findById gibt leeres Optional zurück wenn keine Kategorie mit dieser ID existiert.
+     */
     @Test
     void testFindById_NichtGefunden() {
         System.out.println("=== Test: Kategorie nach ID suchen - nicht gefunden ===");
@@ -72,6 +84,10 @@ class KategorieServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: save speichert eine Kategorie und gibt sie mit generierter ID zurück.
+     * Erwartet ID 3 und Name "Sport".
+     */
     @Test
     void testSave_SpeichertKategorie() {
         System.out.println("=== Test: Kategorie speichern ===");
@@ -88,6 +104,9 @@ class KategorieServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: existsByName gibt true zurück wenn eine Kategorie mit diesem Namen existiert.
+     */
     @Test
     void testExistsByName_Vorhanden() {
         System.out.println("=== Test: Kategorie nach Name prüfen - vorhanden ===");
@@ -102,6 +121,10 @@ class KategorieServiceTest {
         System.out.println("Test bestanden: true");
     }
 
+    /**
+     * Test: deleteById delegiert den Aufruf an das Repository.
+     * Prüft ob deleteById(1L) genau einmal aufgerufen wurde.
+     */
     @Test
     void testDeleteById_RuftRepositoryAuf() {
         System.out.println("=== Test: Kategorie löschen ===");
